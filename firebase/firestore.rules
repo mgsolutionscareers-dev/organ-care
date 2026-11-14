@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.admin == true || 
+         request.auth.token.email == 'm.g.kalyan2@gmail.com');
+    }
+
+    // Public read-only educational content
+    match /organs/{organId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /organFunctions/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /diseases/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /warningSigns/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /nutrition/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /healthyHabits/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /specialists/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /doctors/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /hospitals/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isAdmin();
+
+      // Search History subcollection
+      match /searchHistory/{historyId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow delete: if isOwner(userId);
+        allow update: if false; // history entries are immutable
+      }
+
+      // Favorite Organs subcollection
+      match /favoriteOrgans/{organId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+
+      // Favorite Doctors subcollection
+      match /favoriteDoctors/{doctorId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+    }
+  }
+}

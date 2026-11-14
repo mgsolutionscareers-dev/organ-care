@@ -1,0 +1,39 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "searchHistory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "favoriteOrgans",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "addedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "favoriteDoctors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "addedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
