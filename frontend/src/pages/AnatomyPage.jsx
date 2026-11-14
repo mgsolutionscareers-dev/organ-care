@@ -6,7 +6,7 @@ import { OrganCardPreview } from '../anatomy/OrganCardPreview';
 import { organsData } from '../data/organsData.js';
 import { useAuth } from '../context/AuthContext';
 import { recordHistoryEvent } from '../services/historyService';
-import { RotateCcw, Sparkles, AlertCircle, Maximize2 } from 'lucide-react';
+import { RotateCcw, Sparkles, AlertCircle, ZoomIn, ZoomOut } from 'lucide-react';
 
 export const AnatomyPage = () => {
   const [searchParams] = useSearchParams();
@@ -70,7 +70,6 @@ export const AnatomyPage = () => {
 
   const handleResetCamera = () => {
     setIsIsolated(false);
-    setSelectedOrgan(null);
     setIsResetting(true);
   };
 
@@ -80,14 +79,14 @@ export const AnatomyPage = () => {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-5rem)] bg-gradient-to-b from-navy-950 via-[#07242C] to-navy-950 overflow-hidden flex flex-col">
+    <div className="relative w-full h-[calc(100vh-5rem)] bg-gradient-to-b from-navy-950 via-[#07242C] to-navy-950 overflow-hidden flex flex-col select-none">
       
-      {/* Top Floating Helper Pill */}
+      {/* Top Floating Helper Banner (Only when not in isolated mode) */}
       {!isIsolated && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden sm:block">
           <div className="px-4 py-1.5 rounded-full bg-navy-900/80 backdrop-blur-md border border-teal-500/30 text-teal-300 text-xs font-semibold shadow-lg flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-            Click any organ mesh to focus, or select 'Isolate Organ' for full 360° medical inspection
+            Click any organ mesh to focus, or select 'Isolate Organ' for 360° medical inspection
           </div>
         </div>
       )}
@@ -132,7 +131,7 @@ export const AnatomyPage = () => {
         )}
 
         {/* Left Overlay: Anatomy Controls Panel */}
-        <div className="absolute top-6 left-6 z-20 hidden md:block">
+        <div className="absolute top-6 left-6 z-20 hidden lg:block">
           <AnatomyControls
             organs={organs}
             selectedOrgan={selectedOrgan}
@@ -149,21 +148,9 @@ export const AnatomyPage = () => {
           />
         </div>
 
-        {/* Right Overlay: Selected Organ Preview Card */}
+        {/* Right Overlay: Selected Organ Preview Card (Fixed Width, matches design reference) */}
         {selectedOrgan && !isIsolated && (
-          <div className="absolute top-6 right-6 z-20 hidden md:block">
-            <OrganCardPreview
-              organ={selectedOrgan}
-              onClose={() => setSelectedOrgan(null)}
-              onIsolate={handleIsolateOrgan}
-              isIsolated={isIsolated}
-            />
-          </div>
-        )}
-
-        {/* Mobile Drawer Bottom Sheet for Selected Organ */}
-        {selectedOrgan && !isIsolated && (
-          <div className="md:hidden absolute bottom-4 left-4 right-4 z-20">
+          <div className="absolute top-6 right-6 z-20">
             <OrganCardPreview
               organ={selectedOrgan}
               onClose={() => setSelectedOrgan(null)}
@@ -174,11 +161,11 @@ export const AnatomyPage = () => {
         )}
 
         {/* Floating Quick Camera Controls (Bottom Right) */}
-        <div className="absolute bottom-6 right-6 z-20 flex flex-col gap-2 bg-navy-900/80 backdrop-blur-md p-1.5 rounded-2xl border border-teal-500/30 text-white">
+        <div className="absolute bottom-6 right-6 z-20 flex flex-col gap-2 bg-navy-900/85 backdrop-blur-md p-1.5 rounded-2xl border border-teal-500/30 text-white shadow-xl">
           <button
             onClick={handleResetCamera}
             title="Reset Camera View"
-            className="w-9 h-9 rounded-xl hover:bg-navy-800 flex items-center justify-center text-teal-300 hover:text-white transition-colors"
+            className="w-9 h-9 rounded-xl hover:bg-navy-800 flex items-center justify-center text-teal-300 hover:text-white transition-colors cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
           </button>

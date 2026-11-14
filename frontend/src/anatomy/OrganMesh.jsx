@@ -1,7 +1,5 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF, Center } from '@react-three/drei';
-import * as THREE from 'three';
 import { 
   RealisticHeart, 
   RealisticBrain, 
@@ -10,73 +8,10 @@ import {
   RealisticStomach, 
   RealisticKidneys, 
   RealisticIntestines,
-  RealisticBladder,
   RealisticPancreas,
+  RealisticBladder,
   RealisticSpleen
 } from './RealisticOrganMeshes';
-
-useGLTF.setDecoderPath('/draco/');
-
-// Mapping of organs with dedicated high-resolution medical GLB models
-const GLB_MODELS = {
-  heart: '/models/heart.glb',
-  lungs: '/models/lungs.glb',
-  liver: '/models/liver.glb',
-  kidneys: '/models/kidneys.glb',
-  stomach: '/models/stomach.glb',
-  brain: '/models/brain.glb',
-  bones: '/models/skeleton.glb'
-};
-
-// Preset in-body anatomical scaling factors
-const IN_BODY_SCALES = {
-  heart: 0.16,
-  lungs: 0.22,
-  liver: 0.20,
-  kidneys: 0.18,
-  stomach: 0.18,
-  brain: 0.19,
-  bones: 0.8
-};
-
-// Subcomponent that loads and renders the GLB inside the body at its anatomical position
-const InBodyGLB = ({ modelPath, organId, isSelected, isHovered }) => {
-  const gltf = useGLTF(modelPath, '/draco/');
-  
-  const cloned = useMemo(() => {
-    if (!gltf || !gltf.scene) return null;
-    const scene = gltf.scene.clone(true);
-    scene.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        if (child.material) {
-          child.material = child.material.clone();
-          if (isSelected) {
-            child.material.emissive = new THREE.Color('#14B8A6');
-            child.material.emissiveIntensity = 0.4;
-          } else if (isHovered) {
-            child.material.emissive = new THREE.Color('#38BDF8');
-            child.material.emissiveIntensity = 0.25;
-          }
-        }
-      }
-    });
-    return scene;
-  }, [gltf, isSelected, isHovered]);
-
-  const scale = IN_BODY_SCALES[organId] || 0.18;
-
-  if (!cloned) return null;
-
-  return (
-    <group scale={[scale, scale, scale]}>
-      <Center>
-        <primitive object={cloned} />
-      </Center>
-    </group>
-  );
-};
 
 export const OrganMesh = ({ 
   organ, 
@@ -106,8 +41,7 @@ export const OrganMesh = ({
 
   if (!visible) return null;
 
-  const hasGLB = !!GLB_MODELS[organ.organId];
-  const glbPath = GLB_MODELS[organ.organId];
+  const isHighlighted = isSelected || localHover || isHovered;
 
   return (
     <group
@@ -130,27 +64,24 @@ export const OrganMesh = ({
         document.body.style.cursor = 'auto';
       }}
     >
-      {/* If GLB model is available, render real GLB, else render high-res realistic organ mesh */}
-      {hasGLB ? (
-        <InBodyGLB 
-          modelPath={glbPath} 
-          organId={organ.organId} 
-          isSelected={isSelected} 
-          isHovered={localHover || isHovered} 
-        />
-      ) : (
-        <>
-          {organ.organId === 'pancreas' && <RealisticPancreas isSelected={isSelected} isHovered={localHover || isHovered} />}
-          {organ.organId === 'intestines' && <RealisticIntestines isSelected={isSelected} isHovered={localHover || isHovered} />}
-          {organ.organId === 'bladder' && <RealisticBladder isSelected={isSelected} isHovered={localHover || isHovered} />}
-          {organ.organId === 'spleen' && <RealisticSpleen isSelected={isSelected} isHovered={localHover || isHovered} />}
-        </>
+      {/* Anatomical Organ Model */}
+      {organ.organId === 'heart' && <RealisticHeart isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'brain' && <RealisticBrain isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'lungs' && <RealisticLungs isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'liver' && <RealisticLiver isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'stomach' && <RealisticStomach isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'kidneys' && <RealisticKidneys isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'pancreas' && <RealisticPancreas isSelected={isSelected} isHovered={isHighlighted} />}
+      {(organ.organId === 'intestines' || organ.organId === 'small-intestine' || organ.organId === 'large-intestine') && (
+        <RealisticIntestines isSelected={isSelected} isHovered={isHighlighted} isLarge={organ.organId === 'large-intestine'} />
       )}
+      {organ.organId === 'bladder' && <RealisticBladder isSelected={isSelected} isHovered={isHighlighted} />}
+      {organ.organId === 'spleen' && <RealisticSpleen isSelected={isSelected} isHovered={isHighlighted} />}
 
-      {/* Floating Organ Label in 3D when hovered or selected */}
-      {(isSelected || localHover || isHovered) && (
-        <mesh position={[0, 0.22, 0]}>
-          <sphereGeometry args={[0.02, 16, 16]} />
+      {/* Floating 3D Organ Marker when hovered or selected */}
+      {isHighlighted && (
+        <mesh position={[0, 0.20, 0]}>
+          <sphereGeometry args={[0.018, 16, 16]} />
           <meshBasicMaterial color={isSelected ? '#14B8A6' : '#38BDF8'} />
         </mesh>
       )}

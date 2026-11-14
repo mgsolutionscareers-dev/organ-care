@@ -93,3 +93,4 @@ All 3D models integrated into the OrganCare platform are professionally authored
   - Rib cage, sternum, clavicles, scapulae
   - Pelvis, sacrum, femur, tibia, and appendicular skeleton
 - **License:** Creative Commons Attribution-ShareAlike 2.1 Japan (CC BY-SA 2.1 JP)
+

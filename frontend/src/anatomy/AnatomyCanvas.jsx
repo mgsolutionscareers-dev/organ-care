@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, Suspense } from 'react';
+import React, { useRef, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -21,7 +21,7 @@ const GLB_MODELS = {
 const CameraRig = ({ 
   selectedOrgan, 
   isIsolated, 
-  defaultCamPos = [0, 0.4, 2.8], 
+  defaultCamPos = [0, 0.35, 2.7], 
   isResetting, 
   onResetComplete 
 }) => {
@@ -30,7 +30,7 @@ const CameraRig = ({
 
   useFrame(() => {
     let targetCamPos = defaultCamPos;
-    let targetLookAt = [0, 0.2, 0];
+    let targetLookAt = [0, 0.15, 0];
 
     if (isIsolated) {
       targetCamPos = [0, 0, 1.8];
@@ -59,7 +59,7 @@ const CameraRig = ({
       ref={controlsRef}
       enableDamping
       dampingFactor={0.06}
-      minDistance={0.5}
+      minDistance={0.6}
       maxDistance={4.5}
       maxPolarAngle={Math.PI / 1.6}
       minPolarAngle={Math.PI / 6}
@@ -69,11 +69,11 @@ const CameraRig = ({
   );
 };
 
-const CanvasLoadingIndicator = () => (
+const IsolatedLoadingIndicator = () => (
   <Html center>
-    <div className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-2xl bg-navy-950/85 backdrop-blur-md text-white border border-teal-500/30 shadow-2xl">
-      <div className="w-8 h-8 border-3 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
-      <span className="text-xs font-bold text-teal-300">Rendering 3D Anatomy Engine...</span>
+    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-navy-950/90 backdrop-blur-md text-white border border-teal-500/30 shadow-2xl">
+      <div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></div>
+      <span className="text-xs font-bold text-teal-300">Loading High-Resolution 3D Model...</span>
     </div>
   </Html>
 );
@@ -103,22 +103,22 @@ export const AnatomyCanvas = ({
   return (
     <div className="w-full h-full relative select-none">
       
-      {/* Isolated Organ Header / Back Button Banner */}
+      {/* Isolated Mode Top Header & Back Button */}
       {isIsolated && selectedOrgan && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3">
-          <div className="px-5 py-2.5 rounded-2xl bg-navy-900/90 backdrop-blur-md border border-brand-400/50 shadow-2xl text-white flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-400 animate-pulse"></span>
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-30">
+          <div className="px-5 py-2.5 rounded-2xl bg-navy-950/90 backdrop-blur-md border border-teal-500/40 shadow-2xl text-white flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-400 animate-ping"></span>
             <div>
-              <span className="text-xs uppercase font-extrabold text-brand-400 tracking-wider">
-                Isolated 3D Inspection
+              <span className="text-[10px] uppercase font-extrabold text-teal-400 tracking-wider block">
+                Isolated 3D Medical Inspection
               </span>
-              <h3 className="text-sm font-extrabold text-white leading-tight">
+              <h3 className="text-sm font-extrabold text-white leading-none">
                 {selectedOrgan.name} ({selectedOrgan.latinName || selectedOrgan.system})
               </h3>
             </div>
             <button
               onClick={onExitIsolation}
-              className="ml-3 px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-navy-950 text-xs font-extrabold shadow-md transition-all"
+              className="ml-3 px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-navy-950 text-xs font-extrabold shadow-md transition-all cursor-pointer"
             >
               ← Back to Full Body
             </button>
@@ -131,7 +131,7 @@ export const AnatomyCanvas = ({
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
       >
-        <PerspectiveCamera makeDefault position={[0, 0.4, 2.8]} fov={45} />
+        <PerspectiveCamera makeDefault position={[0, 0.35, 2.7]} fov={45} />
         
         {/* Lights */}
         <ambientLight intensity={0.8} />
@@ -140,9 +140,9 @@ export const AnatomyCanvas = ({
         <pointLight position={[0, 2, 2]} intensity={0.9} color="#38BDF8" distance={6} />
         <pointLight position={[0, -1, 1.5]} intensity={0.5} color="#14B8A6" distance={4} />
 
-        <Suspense fallback={<CanvasLoadingIndicator />}>
-          {isIsolated && selectedOrgan ? (
-            /* ----------------- ISOLATED ORGAN 360 INSPECTION MODE ----------------- */
+        {isIsolated && selectedOrgan ? (
+          /* ----------------- ISOLATED ORGAN 360 INSPECTION MODE ----------------- */
+          <Suspense fallback={<IsolatedLoadingIndicator />}>
             <group position={[0, 0, 0]}>
               {isolatedGlb ? (
                 <GLBOrganModel
@@ -150,53 +150,52 @@ export const AnatomyCanvas = ({
                   organId={selectedOrgan.organId}
                   isSelected={true}
                   showLandmarks={true}
-                  scaleMultiplier={1.4}
+                  scaleMultiplier={1.3}
                 />
               ) : (
-                <OrganMesh
-                  organ={selectedOrgan}
-                  isSelected={true}
-                  isHovered={false}
-                  onSelect={null}
-                  onHover={null}
-                />
+                <group scale={1.8}>
+                  <OrganMesh
+                    organ={selectedOrgan}
+                    isSelected={true}
+                    isHovered={false}
+                    onSelect={null}
+                    onHover={null}
+                  />
+                </group>
               )}
             </group>
-          ) : (
-            /* ----------------- FULL HUMAN BODY EXPLORER ----------------- */
-            <group position={[0, 0, 0]}>
-              {/* Multi-layer Human Body with Real GLB Skeleton & Anatomy */}
-              <HumanBodyModel 
-                gender={gender} 
-                visible={true}
-                showSkin={layers.bodyShell}
-                showSkeletal={layers.skeletal}
-                showInternalOrgans={layers.internalOrgans}
-                skinOpacity={layers.skinOpacity}
-                onSelectOrgan={onSelectOrgan}
+          </Suspense>
+        ) : (
+          /* ----------------- FULL HUMAN BODY EXPLORER (INSTANT RENDER) ----------------- */
+          <group position={[0, 0, 0]}>
+            <HumanBodyModel 
+              gender={gender} 
+              visible={true}
+              showSkin={layers.bodyShell}
+              showSkeletal={layers.skeletal}
+              skinOpacity={layers.skinOpacity}
+            />
+
+            {/* Individual Interactive Organs positioned in body */}
+            {layers.internalOrgans && filteredOrgans.map(organ => (
+              <OrganMesh
+                key={organ.organId}
+                organ={organ}
+                isSelected={selectedOrgan?.organId === organ.organId}
+                isHovered={hoveredOrgan?.organId === organ.organId}
+                onSelect={onSelectOrgan}
+                onHover={onHoverOrgan}
               />
+            ))}
+          </group>
+        )}
 
-              {/* Individual Interactive Organs positioned in body */}
-              {layers.internalOrgans && filteredOrgans.map(organ => (
-                <OrganMesh
-                  key={organ.organId}
-                  organ={organ}
-                  isSelected={selectedOrgan?.organId === organ.organId}
-                  isHovered={hoveredOrgan?.organId === organ.organId}
-                  onSelect={onSelectOrgan}
-                  onHover={onHoverOrgan}
-                />
-              ))}
-            </group>
-          )}
-
-          <CameraRig
-            selectedOrgan={selectedOrgan}
-            isIsolated={isIsolated}
-            isResetting={isResetting}
-            onResetComplete={onResetComplete}
-          />
-        </Suspense>
+        <CameraRig
+          selectedOrgan={selectedOrgan}
+          isIsolated={isIsolated}
+          isResetting={isResetting}
+          onResetComplete={onResetComplete}
+        />
       </Canvas>
     </div>
   );
