@@ -30,3 +30,4 @@ export const verifyFirebaseToken = async (req, res, next) => {
     });
   }
 };
+

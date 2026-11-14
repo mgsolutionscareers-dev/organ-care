@@ -31,3 +31,4 @@ export const getOrganById = (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to retrieve organ details', error: error.message });
   }
 };
+

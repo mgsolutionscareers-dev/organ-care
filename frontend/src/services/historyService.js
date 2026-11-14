@@ -110,3 +110,4 @@ export const clearAllHistory = async (userId) => {
     console.warn('[HistoryService] Firestore clear error:', err.message);
   }
 };
+

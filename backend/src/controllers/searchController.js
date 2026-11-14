@@ -87,3 +87,4 @@ export const globalSearch = (req, res) => {
     res.status(500).json({ success: false, message: 'Global search failed', error: error.message });
   }
 };
+

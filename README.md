@@ -180,3 +180,4 @@ The new project `organcare-health-84c2b` has been provisioned and its web app re
    - Automatic debounced recording of searches, 3D organ clicks, and page visits
    - Individual deletion and "Clear Entire History"
    - Favorite organs and favorite doctors management
+

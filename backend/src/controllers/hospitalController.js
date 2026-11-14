@@ -49,3 +49,4 @@ export const getHospitalById = (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to retrieve hospital details', error: error.message });
   }
 };
+

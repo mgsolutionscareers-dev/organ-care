@@ -240,3 +240,4 @@ export const HospitalDetailPage = () => {
     </div>
   );
 };
+

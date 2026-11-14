@@ -261,3 +261,4 @@ export const NutritionPage = () => {
     </div>
   );
 };
+

@@ -182,3 +182,4 @@ export const GlobalSearchModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
+

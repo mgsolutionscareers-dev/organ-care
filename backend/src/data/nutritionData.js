@@ -217,3 +217,4 @@ export const nutritionData = [
     scientificDisclaimer: "If you experience dark black stools, persistent vomiting, or difficulty swallowing, consult a gastroenterologist immediately."
   }
 ];
+

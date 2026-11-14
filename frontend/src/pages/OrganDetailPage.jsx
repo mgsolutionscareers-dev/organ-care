@@ -7,15 +7,16 @@ import {
   BookmarkCheck, 
   Activity, 
   AlertTriangle, 
-  Apple, 
   Stethoscope, 
   Building2, 
   Share2, 
   ShieldAlert, 
-  CheckCircle2,
-  Sparkles
+  CheckCircle2, 
+  Sparkles,
+  RotateCw
 } from 'lucide-react';
-import { organsData } from '../../../backend/src/data/organsData.js';
+import { organsData } from '../data/organsData';
+import { Organ3DViewer } from '../anatomy/Organ3DViewer';
 import { useAuth } from '../context/AuthContext';
 import { recordHistoryEvent } from '../services/historyService';
 import { toggleFavoriteOrgan, fetchFavoriteOrgans } from '../services/favoritesService';
@@ -29,13 +30,12 @@ export const OrganDetailPage = () => {
   const [activeTab, setActiveTab] = useState('overview'); // overview, functions, diseases, nutrition, lifestyle, specialist
   const [isFavorite, setIsFavorite] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [viewMode, setViewMode] = useState('3d'); // '3d' | 'illustration'
 
   useEffect(() => {
-    // Look up organ from dataset or API
-    const found = organsData.find(o => o.organId.toLowerCase() === id.toLowerCase());
+    const found = organsData.find(o => o.organId.toLowerCase() === id.toLowerCase()) || organsData[0];
     if (found) {
       setOrgan(found);
-      // Record view in history for authenticated users
       if (currentUser) {
         recordHistoryEvent(currentUser.uid, {
           title: `Viewed ${found.name}`,
@@ -45,7 +45,6 @@ export const OrganDetailPage = () => {
           details: `Explored organ health guide for ${found.name}`
         });
 
-        // Check favorite status
         fetchFavoriteOrgans(currentUser.uid).then(favs => {
           setIsFavorite(favs.some(f => f.organId === found.organId));
         });
@@ -68,17 +67,7 @@ export const OrganDetailPage = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  if (!organ) {
-    return (
-      <div className="min-h-screen py-24 text-center">
-        <h2 className="text-2xl font-bold text-slate-800">Organ Not Found</h2>
-        <p className="text-sm text-slate-500 mt-2">The requested organ does not exist in our anatomical database.</p>
-        <Link to="/anatomy" className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-brand-500 text-white font-bold text-sm">
-          Return to 3D Anatomy Explorer
-        </Link>
-      </div>
-    );
-  }
+  if (!organ) return null;
 
   const organImages = {
     heart: "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=800&q=80",
@@ -88,7 +77,7 @@ export const OrganDetailPage = () => {
     kidneys: "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80",
   };
 
-  const mainImage = organImages[organ.organId] || "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=800&q=80";
+  const illustrationImage = organImages[organ.organId] || "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=800&q=80";
 
   const tabs = [
     { key: 'overview', label: 'Overview' },
@@ -140,24 +129,42 @@ export const OrganDetailPage = () => {
         <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-soft border border-slate-100 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Left Column: Anatomical Graphic / 3D Model Card */}
+            {/* Left Column: Interactive 3D Organ Canvas & Toggle */}
             <div className="lg:col-span-5 flex flex-col items-center">
-              <div className="w-full aspect-square max-w-sm rounded-3xl overflow-hidden bg-gradient-to-b from-navy-950 via-[#0B2C33] to-navy-950 p-4 border border-teal-500/30 shadow-xl flex items-center justify-center relative group">
-                <img
-                  src={mainImage}
-                  alt={organ.name}
-                  className="w-full h-full object-cover rounded-2xl opacity-90 group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-transparent"></div>
+              <div className="w-full aspect-square max-w-sm rounded-3xl overflow-hidden bg-gradient-to-b from-navy-950 via-[#0B2C33] to-navy-950 p-2 border border-teal-500/30 shadow-xl flex items-center justify-center relative group">
                 
-                {/* 3D Interactive trigger badge */}
-                <Link
-                  to={`/anatomy?organ=${organ.organId}`}
-                  className="absolute bottom-4 left-4 right-4 py-2.5 px-4 rounded-xl bg-brand-500/90 hover:bg-brand-400 text-navy-950 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg backdrop-blur-md transition-all"
-                >
-                  <Activity className="w-4 h-4" />
-                  View in 3D Anatomy Model
-                </Link>
+                {viewMode === '3d' ? (
+                  <div className="w-full h-full relative">
+                    <Organ3DViewer organ={organ} />
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-navy-900/80 backdrop-blur-md text-teal-300 text-[10px] font-bold flex items-center gap-1 pointer-events-none">
+                      <RotateCw className="w-3 h-3 animate-spin" />
+                      360° Drag & Rotate
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={illustrationImage}
+                    alt={organ.name}
+                    className="w-full h-full object-cover rounded-2xl opacity-90"
+                  />
+                )}
+
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+                  <button
+                    onClick={() => setViewMode(viewMode === '3d' ? 'illustration' : '3d')}
+                    className="py-1.5 px-3 rounded-xl bg-navy-900/90 hover:bg-navy-800 text-teal-300 text-[11px] font-bold backdrop-blur-md border border-teal-500/30"
+                  >
+                    {viewMode === '3d' ? 'Show Medical Illustration' : 'Show Interactive 3D Model'}
+                  </button>
+
+                  <Link
+                    to={`/anatomy?organ=${organ.organId}`}
+                    className="py-1.5 px-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-navy-950 text-[11px] font-extrabold flex items-center gap-1 shadow-md"
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    Full Body View
+                  </Link>
+                </div>
               </div>
 
               <div className="mt-4 flex items-center gap-4 text-xs font-semibold text-slate-500">
@@ -187,7 +194,7 @@ export const OrganDetailPage = () => {
                 </p>
               </div>
 
-              {/* Navigation Tabs (Overview, Functions, Diseases, Nutrition, Lifestyle, Specialist) */}
+              {/* Navigation Tabs */}
               <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
                 {tabs.map((tab) => (
                   <button

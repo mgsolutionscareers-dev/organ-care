@@ -46,3 +46,4 @@ export const getDoctorById = (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to retrieve doctor details', error: error.message });
   }
 };
+

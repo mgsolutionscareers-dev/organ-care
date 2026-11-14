@@ -21,3 +21,4 @@ export const aiChatLimiter = rateLimit({
     message: 'AI chat request limit exceeded. Please wait a few minutes before asking more questions.'
   }
 });
+

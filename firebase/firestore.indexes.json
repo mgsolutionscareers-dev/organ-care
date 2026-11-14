@@ -13,26 +13,6 @@
           "order": "DESCENDING"
         }
       ]
-    },
-    {
-      "collectionGroup": "favoriteOrgans",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "addedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "favoriteDoctors",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "addedAt",
-          "order": "DESCENDING"
-        }
-      ]
     }
   ],
   "fieldOverrides": []

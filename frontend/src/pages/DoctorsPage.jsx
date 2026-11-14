@@ -9,20 +9,17 @@ import {
   Bookmark, 
   BookmarkCheck, 
   Phone, 
-  Mail, 
   Building2, 
-  Navigation, 
-  Filter, 
-  X,
-  ExternalLink,
+  Calendar,
   ShieldCheck,
-  Calendar
+  X,
+  ExternalLink
 } from 'lucide-react';
-import { doctorsData } from '../../../backend/src/data/doctorsData.js';
-import { hospitalsData } from '../../../backend/src/data/hospitalsData.js';
+import { doctorsData } from '../data/doctorsData';
+import { hospitalsData } from '../data/hospitalsData';
+import { HospitalMap } from '../components/HospitalMap';
 import { useAuth } from '../context/AuthContext';
 import { toggleFavoriteDoctor, fetchFavoriteDoctors } from '../services/favoritesService';
-import { recordHistoryEvent } from '../services/historyService';
 
 export const DoctorsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,6 +28,7 @@ export const DoctorsPage = () => {
 
   const [doctors, setDoctors] = useState(doctorsData);
   const [hospitals, setHospitals] = useState(hospitalsData);
+  const [selectedHospital, setSelectedHospital] = useState(hospitalsData[0]);
   const [selectedSpecialty, setSelectedSpecialty] = useState(specialtyParam);
   const [selectedCity, setSelectedCity] = useState(cityParam);
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,13 +127,12 @@ export const DoctorsPage = () => {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs shadow-md transition-all self-start md:self-auto"
           >
             <Building2 className="w-4 h-4 text-brand-400" />
-            Browse All Hospitals & ERs
+            Browse Full Hospital Navigator
           </Link>
         </div>
 
         {/* ----------------- SEARCH & FILTER BAR ----------------- */}
         <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-soft border border-slate-100 mb-8 flex flex-col md:flex-row items-center gap-4">
-          {/* Text Search */}
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
@@ -147,7 +144,6 @@ export const DoctorsPage = () => {
             />
           </div>
 
-          {/* Specialty Filter Dropdown */}
           <div className="w-full md:w-56">
             <select
               value={selectedSpecialty}
@@ -163,7 +159,6 @@ export const DoctorsPage = () => {
             </select>
           </div>
 
-          {/* Location Filter */}
           <div className="w-full md:w-48">
             <select
               value={selectedCity}
@@ -180,7 +175,7 @@ export const DoctorsPage = () => {
           </div>
         </div>
 
-        {/* ----------------- SPLIT LAYOUT: DOCTORS LIST & MAP PREVIEW ----------------- */}
+        {/* ----------------- SPLIT LAYOUT: DOCTORS LIST & INTERACTIVE MAP PREVIEW ----------------- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Doctor Cards (Matches Reference Layout) */}
@@ -211,7 +206,6 @@ export const DoctorsPage = () => {
                     className="bg-white rounded-3xl p-5 sm:p-6 shadow-soft hover:shadow-lg border border-slate-100 hover:border-brand-200 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
                   >
                     <div className="flex items-start sm:items-center gap-4 min-w-0">
-                      {/* Doctor Avatar */}
                       <img
                         src={doctor.avatar}
                         alt={doctor.name}
@@ -278,52 +272,53 @@ export const DoctorsPage = () => {
             )}
           </div>
 
-          {/* Right Column: Hospital Map & Featured Clinic Preview (Matches Reference) */}
+          {/* Right Column: Live Interactive Map (Matches Screenshot Exactly!) */}
           <div className="lg:col-span-5 space-y-5 sticky top-28">
             <div className="bg-white rounded-3xl p-5 shadow-soft border border-slate-100">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-bold text-navy-900">Nearby Tertiary Hospitals</h3>
+                <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-brand-500" />
+                  Nearby Hospitals
+                </h3>
                 <Link to="/hospitals" className="text-xs font-bold text-brand-600 hover:underline">
-                  Full Screen Map
+                  View Full Map
                 </Link>
               </div>
 
-              {/* Map Preview Image / Embed Container */}
-              <div className="w-full h-64 rounded-2xl overflow-hidden relative border border-slate-200 shadow-inner group">
-                <img
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80"
-                  alt="City Medical Center Map Preview"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-navy-950/20"></div>
+              {/* Live Interactive Leaflet Map */}
+              <HospitalMap
+                hospitals={hospitals}
+                selectedHospital={selectedHospital}
+                onSelectHospital={(h) => setSelectedHospital(h)}
+                height="320px"
+              />
 
-                {/* Simulated Interactive Map Pin Overlay */}
-                <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                  <div className="px-3 py-1.5 rounded-xl bg-navy-900/90 backdrop-blur-md text-white border border-teal-500/40 shadow-xl text-xs font-bold flex items-center gap-1.5 animate-bounce">
-                    <Building2 className="w-3.5 h-3.5 text-brand-400" />
-                    City Heart Hospital (2.8 km)
-                  </div>
-                  <div className="w-3 h-3 bg-brand-500 rotate-45 -mt-1.5 shadow-md"></div>
-                </div>
-
-                <div className="absolute bottom-3 left-3 right-3 p-3 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100 shadow-lg flex items-center justify-between">
+              {/* Selected Hospital Info Footer */}
+              {selectedHospital && (
+                <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800">City Heart Hospital</h4>
-                    <p className="text-[11px] text-slate-500">4.2 ★ (1,245 reviews) • 2.8 km</p>
+                    <h4 className="text-xs font-bold text-navy-900">{selectedHospital.name}</h4>
+                    <p className="text-[11px] text-slate-500">{selectedHospital.address} • {selectedHospital.distanceKm} km</p>
                   </div>
                   <Link
-                    to="/hospitals/hosp-1"
-                    className="px-3 py-1.5 rounded-lg bg-brand-500 text-white font-bold text-xs"
+                    to={`/hospitals/${selectedHospital.id}`}
+                    className="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs"
                   >
-                    Get Directions
+                    Directions
                   </Link>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Quick Hospital Card Preview */}
+            {/* Quick Hospital List */}
             {hospitals.slice(0, 2).map((hosp) => (
-              <div key={hosp.id} className="bg-white rounded-3xl p-5 shadow-soft border border-slate-100 flex items-center justify-between gap-4">
+              <div
+                key={hosp.id}
+                onClick={() => setSelectedHospital(hosp)}
+                className={`bg-white rounded-3xl p-5 shadow-soft border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+                  selectedHospital?.id === hosp.id ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-slate-100 hover:border-brand-200'
+                }`}
+              >
                 <div className="min-w-0">
                   <span className="text-[10px] uppercase font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">
                     {hosp.emergency24x7 ? '24/7 Emergency Care' : 'General Care'}
@@ -333,6 +328,7 @@ export const DoctorsPage = () => {
                 </div>
                 <Link
                   to={`/hospitals/${hosp.id}`}
+                  onClick={(e) => e.stopPropagation()}
                   className="px-3 py-2 rounded-xl border border-slate-200 hover:border-brand-300 text-slate-700 hover:text-brand-600 text-xs font-bold shrink-0 transition-colors"
                 >
                   Details

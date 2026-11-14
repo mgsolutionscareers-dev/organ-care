@@ -20,3 +20,4 @@ export const getNutritionByOrganId = (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to retrieve nutrition details', error: error.message });
   }
 };
+
