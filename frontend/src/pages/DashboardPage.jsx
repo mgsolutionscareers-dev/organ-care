@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { fetchSearchHistory } from '../services/historyService';
 import { fetchFavoriteOrgans, fetchFavoriteDoctors } from '../services/favoritesService';
-import { organsData } from '../../../backend/src/data/organsData.js';
+import { organsData } from '../data/organsData.js';
 
 export const DashboardPage = () => {
   const { currentUser, userProfile, logout } = useAuth();

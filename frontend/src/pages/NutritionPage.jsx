@@ -15,7 +15,7 @@ import {
   Sparkles,
   Info
 } from 'lucide-react';
-import { nutritionData } from '../../../backend/src/data/nutritionData.js';
+import { nutritionData } from '../data/nutritionData.js';
 
 export const NutritionPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -13,9 +13,14 @@ import {
   CheckCircle2,
   Heart,
   Brain,
-  Wind
+  Wind,
+  MapPin,
+  Star,
+  Navigation
 } from 'lucide-react';
-import { organsData } from '../../../backend/src/data/organsData.js';
+import { organsData } from '../data/organsData.js';
+import { hospitalsData } from '../data/hospitalsData.js';
+import { HospitalMap } from '../components/HospitalMap.jsx';
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -328,6 +333,90 @@ export const HomePage = () => {
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------- NEARBY HOSPITALS & EMERGENCY CENTERS PREVIEW ----------------- */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
+          <div>
+            <span className="text-xs uppercase font-extrabold tracking-wider text-brand-600 flex items-center gap-1.5">
+              <Building2 className="w-4 h-4" />
+              Tertiary Medical Network
+            </span>
+            <h2 className="text-3xl font-extrabold text-navy-900 mt-1">
+              Nearby Hospitals & Emergency Centers
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Real-time map and directory of accredited hospitals, specialized cardiac care, and 24/7 trauma departments.
+            </p>
+          </div>
+          <Link
+            to="/hospitals"
+            className="mt-4 md:mt-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs shadow-md transition-all self-start md:self-auto"
+          >
+            Launch Full Hospital Navigator <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left: Interactive Map */}
+          <div className="lg:col-span-7">
+            <HospitalMap
+              hospitals={hospitalsData}
+              selectedHospital={hospitalsData[0]}
+              height="380px"
+            />
+          </div>
+
+          {/* Right: Hospital Quick List */}
+          <div className="lg:col-span-5 space-y-4">
+            {hospitalsData.slice(0, 3).map((hosp) => (
+              <div
+                key={hosp.id}
+                onClick={() => navigate(`/hospitals/${hosp.id}`)}
+                className="bg-white rounded-3xl p-5 shadow-soft hover:shadow-lg border border-slate-100 hover:border-brand-200 transition-all cursor-pointer group flex items-center justify-between gap-4"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    {hosp.emergency24x7 && (
+                      <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 font-extrabold text-[10px] tracking-wider uppercase">
+                        24/7 Emergency
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-amber-400 stroke-amber-400" />
+                      {hosp.rating}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-navy-900 group-hover:text-brand-600 transition-colors mt-1 truncate">
+                    {hosp.name}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1 truncate">
+                    <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                    {hosp.address}
+                  </p>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="text-xs font-bold text-brand-600 block">
+                    {hosp.distanceKm} km
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    ~{hosp.travelTime}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            <Link
+              to="/hospitals"
+              className="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors block text-center"
+            >
+              View All {hospitalsData.length} Accredited Hospitals
+              <ArrowRight className="w-4 h-4 text-brand-500" />
+            </Link>
           </div>
         </div>
       </section>

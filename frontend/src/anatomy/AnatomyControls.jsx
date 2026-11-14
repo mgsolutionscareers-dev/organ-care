@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { 
   RotateCcw, 
-  ZoomIn, 
-  ZoomOut, 
   ChevronRight, 
   ChevronDown, 
   Layers, 
-  Eye, 
-  EyeOff, 
   User, 
   Compass, 
   Activity,
-  Heart,
-  Brain,
-  Wind
+  Sliders,
+  Maximize2,
+  Sparkles
 } from 'lucide-react';
 
 export const AnatomyControls = ({
@@ -26,6 +22,8 @@ export const AnatomyControls = ({
   setActiveSystem,
   layers,
   setLayers,
+  isIsolated,
+  setIsIsolated,
   onResetCamera
 }) => {
   const [openSection, setOpenSection] = useState('organs'); // 'organs' | 'systems' | 'layers'
@@ -45,16 +43,17 @@ export const AnatomyControls = ({
   ];
 
   return (
-    <div className="w-72 bg-navy-950/85 backdrop-blur-xl border border-teal-500/25 rounded-2xl p-4 text-white shadow-2xl flex flex-col gap-4">
-      {/* 1. Body View Mode Toggle */}
+    <div className="w-76 bg-navy-950/90 backdrop-blur-xl border border-teal-500/25 rounded-3xl p-4 text-white shadow-2xl flex flex-col gap-3.5 select-none">
+      
+      {/* 1. Body View Gender Toggle */}
       <div>
-        <label className="text-xs uppercase tracking-wider text-teal-400 font-semibold mb-2 block">
+        <label className="text-[11px] uppercase tracking-wider text-teal-400 font-extrabold mb-1.5 block">
           Select Body View
         </label>
-        <div className="grid grid-cols-2 p-1 bg-navy-900/90 rounded-xl border border-teal-500/20">
+        <div className="grid grid-cols-2 p-1 bg-navy-900/90 rounded-2xl border border-teal-500/20">
           <button
             onClick={() => setGender('male')}
-            className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               gender === 'male'
                 ? 'bg-brand-500 text-navy-950 shadow-md'
                 : 'text-slate-300 hover:text-white'
@@ -65,7 +64,7 @@ export const AnatomyControls = ({
           </button>
           <button
             onClick={() => setGender('female')}
-            className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
               gender === 'female'
                 ? 'bg-brand-500 text-navy-950 shadow-md'
                 : 'text-slate-300 hover:text-white'
@@ -77,15 +76,31 @@ export const AnatomyControls = ({
         </div>
       </div>
 
-      {/* 2. Accordions */}
+      {/* 2. Isolated Organ Mode Toggle Button */}
+      {selectedOrgan && (
+        <button
+          onClick={() => setIsIsolated(!isIsolated)}
+          className={`w-full py-2.5 px-3 rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 border transition-all ${
+            isIsolated
+              ? 'bg-amber-500 text-navy-950 border-amber-400 shadow-md'
+              : 'bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border-teal-500/40'
+          }`}
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+          {isIsolated ? 'Exit Isolated View' : `Isolate ${selectedOrgan.name} (360°)`}
+        </button>
+      )}
+
+      {/* 3. Accordions */}
       <div className="flex flex-col gap-2">
+        
         {/* Organs Accordion */}
-        <div className="border border-teal-500/20 rounded-xl overflow-hidden bg-navy-900/50">
+        <div className="border border-teal-500/20 rounded-2xl overflow-hidden bg-navy-900/50">
           <button
             onClick={() => toggleSection('organs')}
             className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs font-semibold text-slate-200 hover:text-teal-300 transition-colors"
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 font-bold">
               <Activity className="w-4 h-4 text-brand-400" />
               Organs ({organs.length})
             </span>
@@ -93,16 +108,18 @@ export const AnatomyControls = ({
           </button>
 
           {openSection === 'organs' && (
-            <div className="px-3 pb-3 max-h-52 overflow-y-auto space-y-1 scrollbar-thin">
+            <div className="px-3 pb-3 max-h-48 overflow-y-auto space-y-1 scrollbar-thin">
               {organs.map((organ) => {
                 const isSelected = selectedOrgan?.organId === organ.organId;
                 return (
                   <button
                     key={organ.organId}
-                    onClick={() => onSelectOrgan(organ)}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between ${
+                    onClick={() => {
+                      onSelectOrgan(organ);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
                       isSelected 
-                        ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40' 
+                        ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40 font-bold' 
                         : 'text-slate-300 hover:bg-navy-800/80 hover:text-white'
                     }`}
                   >
@@ -116,12 +133,12 @@ export const AnatomyControls = ({
         </div>
 
         {/* Systems Accordion */}
-        <div className="border border-teal-500/20 rounded-xl overflow-hidden bg-navy-900/50">
+        <div className="border border-teal-500/20 rounded-2xl overflow-hidden bg-navy-900/50">
           <button
             onClick={() => toggleSection('systems')}
             className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs font-semibold text-slate-200 hover:text-teal-300 transition-colors"
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 font-bold">
               <Compass className="w-4 h-4 text-brand-400" />
               Anatomical Systems
             </span>
@@ -136,9 +153,9 @@ export const AnatomyControls = ({
                   <button
                     key={sys.key}
                     onClick={() => setActiveSystem(sys.key)}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-between ${
+                    className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
                       isActive 
-                        ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40' 
+                        ? 'bg-brand-500/20 text-brand-300 border border-brand-500/40 font-bold' 
                         : 'text-slate-300 hover:bg-navy-800/80 hover:text-white'
                     }`}
                   >
@@ -150,13 +167,13 @@ export const AnatomyControls = ({
           )}
         </div>
 
-        {/* Layers Accordion */}
-        <div className="border border-teal-500/20 rounded-xl overflow-hidden bg-navy-900/50">
+        {/* Visual Layers & Opacity Accordion */}
+        <div className="border border-teal-500/20 rounded-2xl overflow-hidden bg-navy-900/50">
           <button
             onClick={() => toggleSection('layers')}
             className="w-full px-3.5 py-2.5 flex items-center justify-between text-xs font-semibold text-slate-200 hover:text-teal-300 transition-colors"
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 font-bold">
               <Layers className="w-4 h-4 text-brand-400" />
               Visual Layers
             </span>
@@ -164,39 +181,69 @@ export const AnatomyControls = ({
           </button>
 
           {openSection === 'layers' && (
-            <div className="px-3 pb-3 space-y-2 text-xs">
+            <div className="px-3 pb-3 space-y-2.5 text-xs">
               <label className="flex items-center justify-between cursor-pointer py-1 text-slate-300 hover:text-white">
-                <span>Body Translucent Shell</span>
+                <span>External Skin Layer</span>
                 <input
                   type="checkbox"
                   checked={layers.bodyShell}
                   onChange={(e) => setLayers({ ...layers, bodyShell: e.target.checked })}
-                  className="rounded text-brand-500 focus:ring-brand-500"
+                  className="rounded text-brand-500 focus:ring-brand-500 w-4 h-4 accent-teal-500"
                 />
               </label>
-              <label className="flex items-center justify-between cursor-pointer py-1 text-slate-300 hover:text-white">
-                <span>Skeletal Silhouette</span>
+
+              {layers.bodyShell && (
+                <div className="pt-1">
+                  <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                    <span>Skin Transparency</span>
+                    <span>{Math.round(layers.skinOpacity * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="1.0"
+                    step="0.05"
+                    value={layers.skinOpacity}
+                    onChange={(e) => setLayers({ ...layers, skinOpacity: parseFloat(e.target.value) })}
+                    className="w-full accent-teal-400 cursor-pointer"
+                  />
+                </div>
+              )}
+
+              <label className="flex items-center justify-between cursor-pointer py-1 text-slate-300 hover:text-white border-t border-slate-800 pt-2">
+                <span>Skeletal System (242 Bones)</span>
                 <input
                   type="checkbox"
                   checked={layers.skeletal}
                   onChange={(e) => setLayers({ ...layers, skeletal: e.target.checked })}
-                  className="rounded text-brand-500 focus:ring-brand-500"
+                  className="rounded text-brand-500 focus:ring-brand-500 w-4 h-4 accent-teal-500"
+                />
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer py-1 text-slate-300 hover:text-white">
+                <span>Internal Organ System</span>
+                <input
+                  type="checkbox"
+                  checked={layers.internalOrgans}
+                  onChange={(e) => setLayers({ ...layers, internalOrgans: e.target.checked })}
+                  className="rounded text-brand-500 focus:ring-brand-500 w-4 h-4 accent-teal-500"
                 />
               </label>
             </div>
           )}
         </div>
+
       </div>
 
       {/* Reset Camera Button */}
       <button
         onClick={onResetCamera}
-        className="mt-1 w-full py-2 px-3 rounded-xl bg-navy-800/80 hover:bg-navy-700/80 text-teal-300 hover:text-white border border-teal-500/30 text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+        className="w-full py-2.5 px-3 rounded-2xl bg-navy-900 hover:bg-navy-800 text-teal-300 hover:text-white border border-teal-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
       >
         <RotateCcw className="w-3.5 h-3.5" />
-        Reset 3D View
+        Reset 3D Body View
       </button>
+
     </div>
   );
 };
-

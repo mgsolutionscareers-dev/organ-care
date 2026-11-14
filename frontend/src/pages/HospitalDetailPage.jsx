@@ -14,7 +14,7 @@ import {
   ExternalLink,
   Share2
 } from 'lucide-react';
-import { hospitalsData } from '../../../backend/src/data/hospitalsData.js';
+import { hospitalsData } from '../data/hospitalsData.js';
 
 export const HospitalDetailPage = () => {
   const { id } = useParams();

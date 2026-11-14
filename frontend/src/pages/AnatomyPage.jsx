@@ -3,10 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { AnatomyCanvas } from '../anatomy/AnatomyCanvas';
 import { AnatomyControls } from '../anatomy/AnatomyControls';
 import { OrganCardPreview } from '../anatomy/OrganCardPreview';
-import { organsData } from '../../../backend/src/data/organsData.js';
+import { organsData } from '../data/organsData.js';
 import { useAuth } from '../context/AuthContext';
 import { recordHistoryEvent } from '../services/historyService';
-import { RotateCcw, ZoomIn, ZoomOut, Sparkles, AlertCircle } from 'lucide-react';
+import { RotateCcw, Sparkles, AlertCircle, Maximize2 } from 'lucide-react';
 
 export const AnatomyPage = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +17,13 @@ export const AnatomyPage = () => {
   const [hoveredOrgan, setHoveredOrgan] = useState(null);
   const [gender, setGender] = useState('male');
   const [activeSystem, setActiveSystem] = useState('all');
-  const [layers, setLayers] = useState({ bodyShell: true, skeletal: true, glow: true });
+  const [layers, setLayers] = useState({ 
+    bodyShell: true, 
+    skeletal: true, 
+    internalOrgans: true, 
+    skinOpacity: 0.35 
+  });
+  const [isIsolated, setIsIsolated] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [webGlAvailable, setWebGlAvailable] = useState(true);
 
@@ -63,20 +69,28 @@ export const AnatomyPage = () => {
   };
 
   const handleResetCamera = () => {
+    setIsIsolated(false);
     setSelectedOrgan(null);
     setIsResetting(true);
+  };
+
+  const handleIsolateOrgan = (organ) => {
+    setSelectedOrgan(organ);
+    setIsIsolated(true);
   };
 
   return (
     <div className="relative w-full h-[calc(100vh-5rem)] bg-gradient-to-b from-navy-950 via-[#07242C] to-navy-950 overflow-hidden flex flex-col">
       
       {/* Top Floating Helper Pill */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className="px-4 py-1.5 rounded-full bg-navy-900/80 backdrop-blur-md border border-teal-500/30 text-teal-300 text-xs font-semibold shadow-lg flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-          Click any internal organ or use the left controls to inspect anatomy
+      {!isIsolated && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div className="px-4 py-1.5 rounded-full bg-navy-900/80 backdrop-blur-md border border-teal-500/30 text-teal-300 text-xs font-semibold shadow-lg flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+            Click any organ mesh to focus, or select 'Isolate Organ' for full 360° medical inspection
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main 3D Canvas Area */}
       <div className="relative w-full h-full">
@@ -90,6 +104,8 @@ export const AnatomyPage = () => {
             gender={gender}
             layers={layers}
             activeSystem={activeSystem}
+            isIsolated={isIsolated}
+            onExitIsolation={() => setIsIsolated(false)}
             isResetting={isResetting}
             onResetComplete={() => setIsResetting(false)}
           />
@@ -127,26 +143,32 @@ export const AnatomyPage = () => {
             setActiveSystem={setActiveSystem}
             layers={layers}
             setLayers={setLayers}
+            isIsolated={isIsolated}
+            setIsIsolated={setIsIsolated}
             onResetCamera={handleResetCamera}
           />
         </div>
 
         {/* Right Overlay: Selected Organ Preview Card */}
-        {selectedOrgan && (
+        {selectedOrgan && !isIsolated && (
           <div className="absolute top-6 right-6 z-20 hidden md:block">
             <OrganCardPreview
               organ={selectedOrgan}
               onClose={() => setSelectedOrgan(null)}
+              onIsolate={handleIsolateOrgan}
+              isIsolated={isIsolated}
             />
           </div>
         )}
 
         {/* Mobile Drawer Bottom Sheet for Selected Organ */}
-        {selectedOrgan && (
+        {selectedOrgan && !isIsolated && (
           <div className="md:hidden absolute bottom-4 left-4 right-4 z-20">
             <OrganCardPreview
               organ={selectedOrgan}
               onClose={() => setSelectedOrgan(null)}
+              onIsolate={handleIsolateOrgan}
+              isIsolated={isIsolated}
             />
           </div>
         )}
@@ -167,4 +189,3 @@ export const AnatomyPage = () => {
     </div>
   );
 };
-

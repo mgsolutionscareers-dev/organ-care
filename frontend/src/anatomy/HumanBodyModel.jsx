@@ -1,206 +1,148 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useGLTF, Center } from '@react-three/drei';
 import * as THREE from 'three';
+
+useGLTF.setDecoderPath('/draco/');
 
 export const HumanBodyModel = ({ 
   gender = 'male', 
   visible = true, 
-  showSkeletal = true 
+  showSkin = true,
+  showSkeletal = true,
+  showInternalOrgans = true,
+  skinOpacity = 0.35,
+  isolatedOrgan = null,
+  onSelectOrgan
 }) => {
   const pedestalRef = useRef();
-  const ringRef = useRef();
+  const ring1Ref = useRef();
+  const ring2Ref = useRef();
 
+  // Load actual medical anatomy GLB models
+  const bodyGltf = useGLTF('/models/human_body.glb');
+  const skeletonGltf = useGLTF('/models/skeleton.glb');
+
+  // Rotate glowing holographic pedestal
   useFrame((state) => {
-    if (ringRef.current) {
-      ringRef.current.rotation.z += 0.003;
-    }
+    const t = state.clock.getElapsedTime();
+    if (ring1Ref.current) ring1Ref.current.rotation.z += 0.004;
+    if (ring2Ref.current) ring2Ref.current.rotation.z -= 0.003;
   });
 
-  if (!visible) return null;
+  // Prepare biological translucent skin / anatomy body model
+  const bodyScene = useMemo(() => {
+    if (!bodyGltf || !bodyGltf.scene) return null;
+    const cloned = bodyGltf.scene.clone(true);
 
-  // Translucent glowing biological body contour
-  const bodyMaterial = new THREE.MeshPhysicalMaterial({
-    color: '#083344',
-    emissive: '#042F2E',
-    emissiveIntensity: 0.25,
-    roughness: 0.2,
-    metalness: 0.1,
-    transmission: 0.85,
-    thickness: 1.2,
-    transparent: true,
-    opacity: 0.28,
-    depthWrite: false,
-  });
+    cloned.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
 
-  // Skeletal silhouette
-  const boneMaterial = new THREE.MeshStandardMaterial({
-    color: '#38BDF8',
-    emissive: '#0284C7',
-    emissiveIntensity: 0.35,
-    roughness: 0.4,
-    transparent: true,
-    opacity: 0.45,
-    depthWrite: false,
-  });
+        if (node.material) {
+          node.material = node.material.clone();
+          node.material.transparent = true;
+          node.material.opacity = showSkin ? Math.max(0.15, skinOpacity) : 0.0;
+          node.material.roughness = 0.3;
+          node.material.metalness = 0.1;
+          node.material.depthWrite = skinOpacity > 0.7;
+          if (node.material.isMeshPhysicalMaterial) {
+            node.material.transmission = 1 - skinOpacity;
+            node.material.thickness = 1.0;
+          }
+        }
+      }
+    });
 
-  // Vascular tree (aorta & vena cava running along the spinal column)
-  const arteryMaterial = new THREE.MeshStandardMaterial({
-    color: '#EF4444',
-    emissive: '#DC2626',
-    emissiveIntensity: 0.5,
-    transparent: true,
-    opacity: 0.65,
-  });
+    return cloned;
+  }, [bodyGltf, showSkin, skinOpacity]);
 
-  const veinMaterial = new THREE.MeshStandardMaterial({
-    color: '#3B82F6',
-    emissive: '#2563EB',
-    emissiveIntensity: 0.5,
-    transparent: true,
-    opacity: 0.65,
-  });
+  // Prepare full human skeleton model
+  const skeletonScene = useMemo(() => {
+    if (!skeletonGltf || !skeletonGltf.scene) return null;
+    const cloned = skeletonGltf.scene.clone(true);
 
+    cloned.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+
+        // Medical bone material
+        node.material = new THREE.MeshStandardMaterial({
+          color: '#E0E7FF',
+          roughness: 0.45,
+          metalness: 0.1,
+          transparent: true,
+          opacity: showSkeletal ? 0.85 : 0.0,
+          depthWrite: showSkeletal,
+        });
+      }
+    });
+
+    return cloned;
+  }, [skeletonGltf, showSkeletal]);
+
+  if (!visible || isolatedOrgan) return null;
+
+  // Female proportion scaling adjustments (narrower shoulders, slightly wider pelvic contour)
   const isFemale = gender === 'female';
-  const shoulderWidth = isFemale ? 0.38 : 0.46;
-  const hipWidth = isFemale ? 0.34 : 0.29;
+  const scaleX = isFemale ? 0.94 : 1.0;
+  const scaleY = isFemale ? 0.96 : 1.0;
 
   return (
-    <group position={[0, 0, 0]}>
-      {/* ----------------- ANATOMICAL SILHOUETTE ----------------- */}
-      <group position={[0, 0, 0]}>
-        {/* Head Cranium */}
-        <mesh position={[0, 1.45, 0.04]} material={bodyMaterial}>
-          <sphereGeometry args={[0.18, 32, 24]} />
-        </mesh>
-        
-        {/* Neck */}
-        <mesh position={[0, 1.18, 0.03]} material={bodyMaterial}>
-          <cylinderGeometry args={[0.08, 0.09, 0.18, 20]} />
+    <group position={[0, -0.4, 0]}>
+      
+      {/* ----------------- HOLOGRAPHIC MEDICAL PEDESTAL ----------------- */}
+      <group position={[0, -0.85, 0]}>
+        {/* Glowing circular platform */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <circleGeometry args={[1.3, 64]} />
+          <meshBasicMaterial color="#0A2A30" transparent opacity={0.65} />
         </mesh>
 
-        {/* Thorax / Upper Torso */}
-        <mesh position={[0, 0.65, 0.03]} material={bodyMaterial}>
-          <cylinderGeometry args={[shoulderWidth, hipWidth, 0.75, 24]} />
+        {/* Concentric rotating holographic rings (matches screenshot) */}
+        <mesh ref={ring1Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
+          <ringGeometry args={[1.15, 1.18, 64]} />
+          <meshBasicMaterial color="#14B8A6" transparent opacity={0.7} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Abdomen & Pelvis */}
-        <mesh position={[0, -0.05, 0.02]} material={bodyMaterial}>
-          <cylinderGeometry args={[hipWidth * 0.9, hipWidth, 0.5, 24]} />
+        <mesh ref={ring2Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
+          <ringGeometry args={[0.85, 0.87, 48]} />
+          <meshBasicMaterial color="#38BDF8" transparent opacity={0.5} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Arms */}
-        <mesh position={[-shoulderWidth - 0.08, 0.6, 0.02]} rotation={[0, 0, 0.18]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.065, 0.55, 12, 16]} />
-        </mesh>
-        <mesh position={[-shoulderWidth - 0.24, 0.05, 0.02]} rotation={[0, 0, 0.15]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.055, 0.52, 12, 16]} />
-        </mesh>
-        <mesh position={[shoulderWidth + 0.08, 0.6, 0.02]} rotation={[0, 0, -0.18]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.065, 0.55, 12, 16]} />
-        </mesh>
-        <mesh position={[shoulderWidth + 0.24, 0.05, 0.02]} rotation={[0, 0, -0.15]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.055, 0.52, 12, 16]} />
-        </mesh>
-
-        {/* Legs */}
-        <mesh position={[-0.16, -0.65, 0.02]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.085, 0.65, 12, 16]} />
-        </mesh>
-        <mesh position={[-0.16, -1.35, 0.02]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.07, 0.65, 12, 16]} />
-        </mesh>
-        <mesh position={[0.16, -0.65, 0.02]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.085, 0.65, 12, 16]} />
-        </mesh>
-        <mesh position={[0.16, -1.35, 0.02]} material={bodyMaterial}>
-          <capsuleGeometry args={[0.07, 0.65, 12, 16]} />
+        {/* Vertical light projector cylinder */}
+        <mesh position={[0, 0.5, 0]}>
+          <cylinderGeometry args={[1.2, 1.25, 1.0, 32, 1, true]} />
+          <meshBasicMaterial
+            color="#14B8A6"
+            transparent
+            opacity={0.05}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+          />
         </mesh>
       </group>
 
-      {/* ----------------- SKELETAL RIB CAGE & SPINE ----------------- */}
-      {showSkeletal && (
-        <group position={[0, 0, 0]}>
-          {/* Vertebral Spinal Column */}
-          <mesh position={[0, 0.5, -0.06]}>
-            <cylinderGeometry args={[0.02, 0.025, 1.1, 12]} />
-            <primitive object={boneMaterial} attach="material" />
-          </mesh>
-
-          {/* Clavicles */}
-          <mesh position={[-0.16, 1.02, 0.04]} rotation={[0, 0, -0.15]}>
-            <cylinderGeometry args={[0.012, 0.012, 0.28, 8]} />
-            <primitive object={boneMaterial} attach="material" />
-          </mesh>
-          <mesh position={[0.16, 1.02, 0.04]} rotation={[0, 0, 0.15]}>
-            <cylinderGeometry args={[0.012, 0.012, 0.28, 8]} />
-            <primitive object={boneMaterial} attach="material" />
-          </mesh>
-
-          {/* Sternum (Chest bone) */}
-          <mesh position={[0, 0.68, 0.16]}>
-            <boxGeometry args={[0.045, 0.22, 0.015]} />
-            <primitive object={boneMaterial} attach="material" />
-          </mesh>
-
-          {/* Rib Arches (10 Anatomical Rib Pairs) */}
-          {[-0.08, -0.02, 0.04, 0.1, 0.16, 0.22].map((yOffset, i) => (
-            <mesh key={i} position={[0, 0.65 + yOffset, 0.04]} rotation={[0.15, 0, 0]}>
-              <torusGeometry args={[0.26 - i * 0.015, 0.009, 8, 24, Math.PI * 1.7]} />
-              <primitive object={boneMaterial} attach="material" />
-            </mesh>
-          ))}
-
-          {/* Pelvis Girdle */}
-          <mesh position={[0, -0.22, 0]}>
-            <torusGeometry args={[0.22, 0.035, 10, 24]} />
-            <primitive object={boneMaterial} attach="material" />
-          </mesh>
+      {/* ----------------- 3D FULL SKELETON MODEL ----------------- */}
+      {showSkeletal && skeletonScene && (
+        <group scale={[0.85 * scaleX, 0.85 * scaleY, 0.85]} position={[0, 0.45, 0]}>
+          <Center top>
+            <primitive object={skeletonScene} />
+          </Center>
         </group>
       )}
 
-      {/* ----------------- GREAT VASCULAR PATHWAYS ----------------- */}
-      <group position={[0, 0, -0.02]}>
-        {/* Abdominal Aorta Trunk (Red) */}
-        <mesh position={[-0.015, 0.1, 0]}>
-          <cylinderGeometry args={[0.014, 0.012, 0.8, 12]} />
-          <primitive object={arteryMaterial} attach="material" />
-        </mesh>
-        {/* Inferior Vena Cava (Blue) */}
-        <mesh position={[0.02, 0.1, 0]}>
-          <cylinderGeometry args={[0.016, 0.014, 0.8, 12]} />
-          <primitive object={veinMaterial} attach="material" />
-        </mesh>
-        {/* Iliac Artery Bifurcations to Legs */}
-        <mesh position={[-0.06, -0.38, 0.01]} rotation={[0, 0, 0.35]}>
-          <cylinderGeometry args={[0.009, 0.007, 0.28, 8]} />
-          <primitive object={arteryMaterial} attach="material" />
-        </mesh>
-        <mesh position={[0.06, -0.38, 0.01]} rotation={[0, 0, -0.35]}>
-          <cylinderGeometry args={[0.009, 0.007, 0.28, 8]} />
-          <primitive object={arteryMaterial} attach="material" />
-        </mesh>
-      </group>
+      {/* ----------------- 3D MEDICAL HUMAN ANATOMY & TORSO ----------------- */}
+      {showInternalOrgans && bodyScene && (
+        <group scale={[1.4 * scaleX, 1.4 * scaleY, 1.4]} position={[0, 0.45, 0]}>
+          <Center top>
+            <primitive object={bodyScene} />
+          </Center>
+        </group>
+      )}
 
-      {/* ----------------- HOLOGRAPHIC TARGET PEDESTAL RINGS ----------------- */}
-      <group position={[0, -1.75, 0]} rotation={[-Math.PI / 2, 0, 0]} ref={pedestalRef}>
-        {/* Glowing Outer Ring */}
-        <mesh ref={ringRef}>
-          <ringGeometry args={[0.85, 0.9, 64]} />
-          <meshBasicMaterial color="#14B8A6" transparent opacity={0.7} side={THREE.DoubleSide} />
-        </mesh>
-        {/* Inner Ring */}
-        <mesh>
-          <ringGeometry args={[0.6, 0.64, 48]} />
-          <meshBasicMaterial color="#06B6D4" transparent opacity={0.45} side={THREE.DoubleSide} />
-        </mesh>
-        {/* Center Target Disc */}
-        <mesh>
-          <circleGeometry args={[0.92, 48]} />
-          <meshBasicMaterial color="#0F2D33" transparent opacity={0.25} side={THREE.DoubleSide} />
-        </mesh>
-        {/* Floor Grid */}
-        <gridHelper args={[2.2, 12, '#14B8A6', '#123E48']} rotation={[Math.PI / 2, 0, 0]} />
-      </group>
     </group>
   );
 };

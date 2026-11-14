@@ -529,3 +529,82 @@ export const RealisticIntestines = ({ isSelected, isHovered, isLarge = false }) 
     </group>
   );
 };
+
+// 8. REALISTIC PANCREAS (HEAD NESTLED IN DUODENUM, ELONGATED BODY, TAPERING TAIL)
+export const RealisticPancreas = ({ isSelected, isHovered }) => {
+  const pancMat = new THREE.MeshStandardMaterial({
+    color: isSelected ? '#38BDF8' : '#FDE047',
+    emissive: isSelected ? '#0284C7' : '#422006',
+    emissiveIntensity: isSelected ? 0.7 : 0.2,
+    roughness: 0.45,
+    metalness: 0.05,
+  });
+
+  return (
+    <group rotation={[0, 0, -0.15]}>
+      {/* Pancreatic Head (C-curve) */}
+      <mesh position={[0.08, -0.02, 0]} scale={[1.1, 1.4, 0.8]}>
+        <sphereGeometry args={[0.045, 24, 24]} />
+        <primitive object={pancMat} attach="material" />
+      </mesh>
+      {/* Pancreatic Body (elongated) */}
+      <mesh position={[0, 0.01, 0.01]} rotation={[0, 0, 1.45]} scale={[0.8, 1.5, 0.6]}>
+        <cylinderGeometry args={[0.028, 0.038, 0.14, 16]} />
+        <primitive object={pancMat} attach="material" />
+      </mesh>
+      {/* Pancreatic Tail (tapering towards spleen) */}
+      <mesh position={[-0.09, 0.03, 0.02]} scale={[0.9, 0.7, 0.5]}>
+        <sphereGeometry args={[0.03, 20, 20]} />
+        <primitive object={pancMat} attach="material" />
+      </mesh>
+    </group>
+  );
+};
+
+// 9. REALISTIC BLADDER (PYRIFORM/ROUNDED HOLLOW VISCUS WITH URETERAL ENTRANCES)
+export const RealisticBladder = ({ isSelected, isHovered }) => {
+  const bladderMat = new THREE.MeshPhysicalMaterial({
+    color: isSelected ? '#38BDF8' : '#F59E0B',
+    emissive: isSelected ? '#0284C7' : '#451A03',
+    emissiveIntensity: isSelected ? 0.7 : 0.2,
+    roughness: 0.25,
+    metalness: 0.1,
+    transmission: 0.35,
+    thickness: 0.5,
+  });
+
+  return (
+    <group>
+      <mesh scale={[1.1, 1.0, 0.95]}>
+        <sphereGeometry args={[0.065, 32, 32]} />
+        <primitive object={bladderMat} attach="material" />
+      </mesh>
+      {/* Urethral neck */}
+      <mesh position={[0, -0.07, 0]}>
+        <cylinderGeometry args={[0.015, 0.018, 0.04, 16]} />
+        <primitive object={bladderMat} attach="material" />
+      </mesh>
+    </group>
+  );
+};
+
+// 10. REALISTIC SPLEEN (CRESCENT / OVOID LYMPHOID ORGAN WITH GASTRIC/RENAL IMPRESSIONS)
+export const RealisticSpleen = ({ isSelected, isHovered }) => {
+  const spleenMat = new THREE.MeshStandardMaterial({
+    color: isSelected ? '#38BDF8' : '#831843',
+    emissive: isSelected ? '#0284C7' : '#4C0519',
+    emissiveIntensity: isSelected ? 0.7 : 0.25,
+    roughness: 0.35,
+    metalness: 0.12,
+  });
+
+  return (
+    <group rotation={[0.3, -0.4, 0.2]}>
+      <mesh scale={[0.8, 1.4, 0.5]}>
+        <sphereGeometry args={[0.055, 28, 28]} />
+        <primitive object={spleenMat} attach="material" />
+      </mesh>
+    </group>
+  );
+};
+

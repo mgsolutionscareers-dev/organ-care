@@ -135,3 +135,4 @@ export const hospitalsData = [
     overview: "Renowned facility specializing in kidney diseases, dialysis services, kidney stone removal, and comprehensive urological care."
   }
 ];
+
