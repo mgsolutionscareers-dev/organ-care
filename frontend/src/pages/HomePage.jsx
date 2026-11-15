@@ -21,10 +21,34 @@ import {
 import { organsData } from '../data/organsData.js';
 import { hospitalsData } from '../data/hospitalsData.js';
 import { HospitalMap } from '../components/HospitalMap.jsx';
+import { fetchLiveNearbyHospitals } from '../services/hospitalLocationService.js';
 
 export const HomePage = () => {
   const navigate = useNavigate();
   const [organs, setOrgans] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [nearbyHospitals, setNearbyHospitals] = useState(hospitalsData);
+
+  useEffect(() => {
+    // Automatically detect user location and calculate closest hospitals
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          setUserLocation({ lat, lng });
+          const liveHospitals = await fetchLiveNearbyHospitals(lat, lng);
+          if (liveHospitals && liveHospitals.length > 0) {
+            setNearbyHospitals(liveHospitals);
+          }
+        },
+        () => {
+          setNearbyHospitals(hospitalsData);
+        },
+        { timeout: 8000 }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     // Fetch organs from backend API with fallback
@@ -364,15 +388,16 @@ export const HomePage = () => {
           {/* Left: Interactive Map */}
           <div className="lg:col-span-7">
             <HospitalMap
-              hospitals={hospitalsData}
-              selectedHospital={hospitalsData[0]}
+              hospitals={nearbyHospitals}
+              selectedHospital={nearbyHospitals[0]}
+              userLocation={userLocation}
               height="380px"
             />
           </div>
 
           {/* Right: Hospital Quick List */}
           <div className="lg:col-span-5 space-y-4">
-            {hospitalsData.slice(0, 3).map((hosp) => (
+            {nearbyHospitals.slice(0, 3).map((hosp) => (
               <div
                 key={hosp.id}
                 onClick={() => navigate(`/hospitals/${hosp.id}`)}

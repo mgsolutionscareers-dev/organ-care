@@ -1,256 +1,235 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo, useEffect, Suspense } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+
+// Configure DRACO decoder path
+useGLTF.setDecoderPath('/draco/');
+
+// High-fidelity Z-Anatomy Full Body Mesh Renderer
+const ZAnatomyBodyRenderer = ({
+  gender = 'male',
+  showSkeletal = true,
+  showMuscular = true,
+  showInternalOrgans = true,
+  boneMaterial,
+  muscleMaterial,
+  anteriorWallMaterial,
+  tendonMaterial
+}) => {
+  const bodyRef = useRef();
+  const { scene } = useGLTF('/models/full_body_anatomy.glb', '/draco/');
+
+  const anatomyModel = useMemo(() => {
+    if (!scene) return null;
+    return scene.clone(true);
+  }, [scene]);
+
+  useEffect(() => {
+    if (!anatomyModel) return;
+
+    anatomyModel.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+        node.renderOrder = showInternalOrgans ? 10 : 0;
+
+        const name = (node.name || '').toLowerCase();
+        const matName = node.material?.name || '';
+
+        const isBone = matName === 'Mat_Bone_Pro' || 
+          /bone|skeleton|cranium|mandible|maxilla|rib|sternum|vertebra|femur|tibia|fibula|scapula|clavicle|pelvis|sacrum|patella|radius|ulna/i.test(name);
+        
+        const isTendon = /tendon|sheath|bursa|cartilage/i.test(name);
+        const isAnteriorMuscle = /pectoral|rectus\s*abdomin|obliquus\s*externus|intercostal/i.test(name);
+
+        if (isBone) {
+          node.visible = Boolean(showSkeletal);
+          node.material = boneMaterial;
+        } else if (isTendon) {
+          node.visible = Boolean(showMuscular);
+          node.material = tendonMaterial;
+        } else if (isAnteriorMuscle && showInternalOrgans) {
+          node.visible = Boolean(showMuscular);
+          node.material = anteriorWallMaterial;
+        } else {
+          node.visible = Boolean(showMuscular);
+          node.material = muscleMaterial;
+        }
+      }
+    });
+  }, [anatomyModel, showSkeletal, showMuscular, showInternalOrgans, boneMaterial, muscleMaterial, anteriorWallMaterial, tendonMaterial]);
+
+  if (!anatomyModel) return null;
+
+  const isFemale = gender === 'female';
+  const bodyScale = isFemale ? [0.94, 0.97, 0.94] : [1.0, 1.0, 1.0];
+
+  return (
+    <group
+      ref={bodyRef}
+      position={[0, -0.858, 0]}
+      scale={bodyScale}
+      renderOrder={showInternalOrgans ? 10 : 0}
+    >
+      <primitive object={anatomyModel} />
+    </group>
+  );
+};
+
+// Immediate Anatomical Human Silhouette while GLB downloads over network
+const BodySilhouetteFallback = ({ gender = 'male' }) => {
+  const isFemale = gender === 'female';
+  return (
+    <group position={[0, -0.05, 0]}>
+      {/* Head wireframe/hologram */}
+      <mesh position={[0, 0.74, 0]}>
+        <sphereGeometry args={[0.13, 16, 16]} />
+        <meshBasicMaterial color="#14B8A6" transparent opacity={0.08} wireframe />
+      </mesh>
+      {/* Torso cage */}
+      <mesh position={[0, 0.28, 0]}>
+        <cylinderGeometry args={[0.18, 0.15, 0.65, 16, 1, true]} />
+        <meshBasicMaterial color="#0D9488" transparent opacity={0.06} wireframe />
+      </mesh>
+      {/* Pelvis & legs silhouette */}
+      <mesh position={[-0.1, -0.4, 0]}>
+        <cylinderGeometry args={[0.07, 0.05, 0.75, 12, 1, true]} />
+        <meshBasicMaterial color="#0D9488" transparent opacity={0.05} wireframe />
+      </mesh>
+      <mesh position={[0.1, -0.4, 0]}>
+        <cylinderGeometry args={[0.07, 0.05, 0.75, 12, 1, true]} />
+        <meshBasicMaterial color="#0D9488" transparent opacity={0.05} wireframe />
+      </mesh>
+    </group>
+  );
+};
 
 export const HumanBodyModel = ({ 
   gender = 'male', 
   visible = true, 
   showSkin = true,
   showSkeletal = true,
+  showMuscular = true,
+  showInternalOrgans = true,
   skinOpacity = 0.35,
 }) => {
-  const pedestalRef = useRef();
   const ring1Ref = useRef();
   const ring2Ref = useRef();
+  const ring3Ref = useRef();
 
   // Rotate concentric holographic pedestal rings
-  useFrame((state) => {
-    if (ring1Ref.current) ring1Ref.current.rotation.z += 0.004;
-    if (ring2Ref.current) ring2Ref.current.rotation.z -= 0.003;
+  useFrame(() => {
+    if (ring1Ref.current) ring1Ref.current.rotation.z += 0.005;
+    if (ring2Ref.current) ring2Ref.current.rotation.z -= 0.0035;
+    if (ring3Ref.current) ring3Ref.current.rotation.z += 0.002;
   });
+
+  // Medical Ivory PBR material for skeletal structures
+  const boneMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: '#E8EDF2',
+      roughness: 0.35,
+      metalness: 0.08,
+      transparent: Boolean(showInternalOrgans),
+      opacity: showInternalOrgans ? 0.52 : 1.0,
+      depthWrite: !showInternalOrgans,
+      shadowSide: THREE.FrontSide,
+    });
+  }, [showInternalOrgans]);
+
+  // Deep anatomical crimson PBR material for muscular tissue
+  const muscleMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: '#991B1B',
+      roughness: 0.50,
+      metalness: 0.06,
+      transparent: true,
+      opacity: showInternalOrgans ? 0.18 : 0.95,
+      depthWrite: !showInternalOrgans,
+    });
+  }, [showInternalOrgans]);
+
+  // Sheer transparent material for anterior chest & abdominal wall
+  const anteriorWallMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: '#7F1D1D',
+      roughness: 0.55,
+      transparent: true,
+      opacity: showInternalOrgans ? 0.03 : 0.95,
+      depthWrite: !showInternalOrgans,
+    });
+  }, [showInternalOrgans]);
+
+  // Translucent pearlescent material for tendons & cartilages
+  const tendonMaterial = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: '#E0F2FE',
+      roughness: 0.28,
+      metalness: 0.12,
+      transparent: true,
+      opacity: showInternalOrgans ? 0.25 : 0.85,
+      depthWrite: false,
+    });
+  }, [showInternalOrgans]);
 
   if (!visible) return null;
 
-  const isFemale = gender === 'female';
-  const shoulderWidth = isFemale ? 0.34 : 0.42;
-  const hipWidth = isFemale ? 0.32 : 0.28;
-  const torsoScale = isFemale ? 0.94 : 1.0;
-
-  // Translucent biological skin material with smooth opacity
-  const skinMaterial = new THREE.MeshPhysicalMaterial({
-    color: '#083344',
-    emissive: '#042F2E',
-    emissiveIntensity: 0.3,
-    roughness: 0.2,
-    metalness: 0.1,
-    transmission: 0.85,
-    thickness: 1.2,
-    transparent: true,
-    opacity: showSkin ? Math.max(0.12, skinOpacity) : 0.0,
-    depthWrite: skinOpacity > 0.7,
-  });
-
-  // Skeletal silhouette material
-  const boneMaterial = new THREE.MeshStandardMaterial({
-    color: '#E0E7FF',
-    emissive: '#38BDF8',
-    emissiveIntensity: 0.25,
-    roughness: 0.4,
-    transparent: true,
-    opacity: showSkeletal ? 0.4 : 0.0,
-    depthWrite: false,
-  });
-
-  // Vascular tree materials
-  const arteryMaterial = new THREE.MeshStandardMaterial({
-    color: '#EF4444',
-    emissive: '#DC2626',
-    emissiveIntensity: 0.5,
-    transparent: true,
-    opacity: 0.65,
-  });
-
-  const veinMaterial = new THREE.MeshStandardMaterial({
-    color: '#3B82F6',
-    emissive: '#2563EB',
-    emissiveIntensity: 0.5,
-    transparent: true,
-    opacity: 0.65,
-  });
-
   return (
-    <group position={[0, -0.15, 0]}>
+    <group position={[0, 0, 0]}>
       
-      {/* ----------------- HOLOGRAPHIC MEDICAL PEDESTAL ----------------- */}
-      <group position={[0, -1.05, 0]}>
-        {/* Glowing circular platform */}
+      {/* ----------------- HOLOGRAPHIC MEDICAL PEDESTAL (INSTANT RENDER) ----------------- */}
+      <group position={[0, -0.855, 0]}>
+        {/* Dark circular platform floor */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <circleGeometry args={[1.3, 64]} />
-          <meshBasicMaterial color="#061E23" transparent opacity={0.75} />
+          <circleGeometry args={[1.25, 64]} />
+          <meshBasicMaterial color="#051D23" transparent opacity={0.82} />
         </mesh>
 
-        {/* Outer Rotating Cyan Ring */}
-        <mesh ref={ring1Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
-          <ringGeometry args={[1.15, 1.18, 64]} />
-          <meshBasicMaterial color="#14B8A6" transparent opacity={0.7} side={THREE.DoubleSide} />
+        {/* Outer Rotating Glowing Teal Ring */}
+        <mesh ref={ring1Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+          <ringGeometry args={[1.05, 1.08, 64]} />
+          <meshBasicMaterial color="#14B8A6" transparent opacity={0.75} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Inner Rotating Sky Ring */}
-        <mesh ref={ring2Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
-          <ringGeometry args={[0.85, 0.88, 48]} />
-          <meshBasicMaterial color="#38BDF8" transparent opacity={0.5} side={THREE.DoubleSide} />
+        {/* Middle Cyan Ring with Dashes */}
+        <mesh ref={ring2Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]}>
+          <ringGeometry args={[0.78, 0.81, 48]} />
+          <meshBasicMaterial color="#38BDF8" transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
 
-        {/* Vertical light projector cylinder */}
-        <mesh position={[0, 0.5, 0]}>
-          <cylinderGeometry args={[1.15, 1.25, 1.0, 32, 1, true]} />
+        {/* Inner Core Ring */}
+        <mesh ref={ring3Ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+          <ringGeometry args={[0.45, 0.47, 36]} />
+          <meshBasicMaterial color="#2DD4BF" transparent opacity={0.4} side={THREE.DoubleSide} />
+        </mesh>
+
+        {/* Vertical Holographic Cylindrical Projector Glow */}
+        <mesh position={[0, 0.85, 0]}>
+          <cylinderGeometry args={[1.05, 1.15, 1.7, 32, 1, true]} />
           <meshBasicMaterial
             color="#14B8A6"
             transparent
-            opacity={0.04}
+            opacity={0.035}
             side={THREE.DoubleSide}
             depthWrite={false}
           />
         </mesh>
       </group>
 
-      {/* ----------------- ANATOMICAL HUMAN BODY SILHOUETTE ----------------- */}
-      <group position={[0, 0.1, 0]} scale={[torsoScale, torsoScale, torsoScale]}>
-        
-        {/* Head & Cranium */}
-        <mesh position={[0, 0.95, 0]}>
-          <sphereGeometry args={[0.13, 32, 32]} />
-          <primitive object={skinMaterial} attach="material" />
-        </mesh>
-        
-        {/* Neck */}
-        <mesh position={[0, 0.81, 0]}>
-          <cylinderGeometry args={[0.065, 0.075, 0.12, 24]} />
-          <primitive object={skinMaterial} attach="material" />
-        </mesh>
-
-        {/* Shoulders & Upper Chest */}
-        <mesh position={[0, 0.68, 0]}>
-          <boxGeometry args={[shoulderWidth * 2, 0.14, 0.18]} />
-          <primitive object={skinMaterial} attach="material" />
-        </mesh>
-
-        {/* Thoracic Cavity / Chest Shell */}
-        <mesh position={[0, 0.52, 0]}>
-          <cylinderGeometry args={[0.26, 0.23, 0.26, 32]} />
-          <primitive object={skinMaterial} attach="material" />
-        </mesh>
-
-        {/* Abdominal Cavity Shell */}
-        <mesh position={[0, 0.28, 0]}>
-          <cylinderGeometry args={[0.22, 0.24, 0.24, 32]} />
-          <primitive object={skinMaterial} attach="material" />
-        </mesh>
-
-        {/* Pelvic Basin Shell */}
-        <mesh position={[0, 0.08, 0]}>
-          <cylinderGeometry args={[0.24, hipWidth, 0.20, 32]} />
-          <primitive object={skinMaterial} attach="material" />
-        </mesh>
-
-        {/* Arms (Standing in anatomical position) */}
-        {/* Left Arm */}
-        <group position={[shoulderWidth + 0.06, 0.42, 0]}>
-          <mesh position={[0.02, 0, 0]} rotation={[0, 0, -0.15]}>
-            <cylinderGeometry args={[0.05, 0.045, 0.36, 16]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-          <mesh position={[0.08, -0.32, 0]} rotation={[0, 0, -0.1]}>
-            <cylinderGeometry args={[0.042, 0.038, 0.34, 16]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-        </group>
-
-        {/* Right Arm */}
-        <group position={[-shoulderWidth - 0.06, 0.42, 0]}>
-          <mesh position={[-0.02, 0, 0]} rotation={[0, 0, 0.15]}>
-            <cylinderGeometry args={[0.05, 0.045, 0.36, 16]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-          <mesh position={[-0.08, -0.32, 0]} rotation={[0, 0, 0.1]}>
-            <cylinderGeometry args={[0.042, 0.038, 0.34, 16]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-        </group>
-
-        {/* Legs (Lower Extremities) */}
-        {/* Left Leg */}
-        <group position={[0.13, -0.42, 0]}>
-          <mesh position={[0, 0, 0]}>
-            <cylinderGeometry args={[0.085, 0.065, 0.44, 20]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-          <mesh position={[0, -0.42, 0]}>
-            <cylinderGeometry args={[0.06, 0.045, 0.44, 20]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-        </group>
-
-        {/* Right Leg */}
-        <group position={[-0.13, -0.42, 0]}>
-          <mesh position={[0, 0, 0]}>
-            <cylinderGeometry args={[0.085, 0.065, 0.44, 20]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-          <mesh position={[0, -0.42, 0]}>
-            <cylinderGeometry args={[0.06, 0.045, 0.44, 20]} />
-            <primitive object={skinMaterial} attach="material" />
-          </mesh>
-        </group>
-
-        {/* ----------------- SKELETAL SYSTEM SILHOUETTE ----------------- */}
-        {showSkeletal && (
-          <group position={[0, 0, 0]}>
-            {/* Cranium / Skull Vault */}
-            <mesh position={[0, 0.96, 0.01]}>
-              <sphereGeometry args={[0.11, 24, 24]} />
-              <primitive object={boneMaterial} attach="material" />
-            </mesh>
-            
-            {/* Spine (Vertebral Column) */}
-            <mesh position={[0, 0.45, -0.06]}>
-              <cylinderGeometry args={[0.025, 0.03, 0.68, 16]} />
-              <primitive object={boneMaterial} attach="material" />
-            </mesh>
-
-            {/* Clavicles (Collar bones) */}
-            <mesh position={[0, 0.69, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.018, 0.018, shoulderWidth * 1.8, 12]} />
-              <primitive object={boneMaterial} attach="material" />
-            </mesh>
-
-            {/* Sternum (Breastbone) */}
-            <mesh position={[0, 0.52, 0.12]}>
-              <boxGeometry args={[0.045, 0.18, 0.02]} />
-              <primitive object={boneMaterial} attach="material" />
-            </mesh>
-
-            {/* Ribcage Structure (Thorax Rings) */}
-            {[0.62, 0.56, 0.50, 0.44, 0.38].map((y, idx) => (
-              <mesh key={idx} position={[0, y, 0.02]} rotation={[Math.PI / 12, 0, 0]}>
-                <torusGeometry args={[0.18 - idx * 0.01, 0.012, 12, 28, Math.PI * 1.4]} />
-                <primitive object={boneMaterial} attach="material" />
-              </mesh>
-            ))}
-
-            {/* Pelvic Basin Ring */}
-            <mesh position={[0, 0.07, 0]}>
-              <torusGeometry args={[0.18, 0.028, 16, 32]} />
-              <primitive object={boneMaterial} attach="material" />
-            </mesh>
-          </group>
-        )}
-
-        {/* ----------------- VASCULAR TREE (AORTA & VENA CAVA) ----------------- */}
-        <group position={[0, 0, 0]}>
-          {/* Descending Aorta */}
-          <mesh position={[-0.015, 0.42, -0.03]}>
-            <cylinderGeometry args={[0.012, 0.010, 0.55, 12]} />
-            <primitive object={arteryMaterial} attach="material" />
-          </mesh>
-          {/* Inferior Vena Cava */}
-          <mesh position={[0.018, 0.38, -0.03]}>
-            <cylinderGeometry args={[0.014, 0.012, 0.48, 12]} />
-            <primitive object={veinMaterial} attach="material" />
-          </mesh>
-        </group>
-
-      </group>
+      {/* ----------------- FULL BODY Z-ANATOMY WITH SILHOUETTE FALLBACK ----------------- */}
+      <Suspense fallback={<BodySilhouetteFallback gender={gender} />}>
+        <ZAnatomyBodyRenderer
+          gender={gender}
+          showSkeletal={showSkeletal}
+          showMuscular={showMuscular}
+          showInternalOrgans={showInternalOrgans}
+          boneMaterial={boneMaterial}
+          muscleMaterial={muscleMaterial}
+          anteriorWallMaterial={anteriorWallMaterial}
+          tendonMaterial={tendonMaterial}
+        />
+      </Suspense>
 
     </group>
   );

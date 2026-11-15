@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { recordHistoryEvent } from '../services/historyService';
+import { sendChatMessage } from '../services/aiService';
 
 export const AiChatbotPage = () => {
   const { currentUser } = useAuth();
@@ -72,13 +73,7 @@ export const AiChatbotPage = () => {
     }
 
     try {
-      const response = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend }),
-      });
-
-      const data = await response.json();
+      const data = await sendChatMessage(textToSend);
 
       if (data.isEmergency) {
         setEmergencyAlert(data.reply);
@@ -101,7 +96,7 @@ export const AiChatbotPage = () => {
         {
           id: `bot-err-${Date.now()}`,
           sender: 'assistant',
-          text: "I experienced a connection issue while communicating with the healthcare intelligence server. Please check your network and try again.",
+          text: "I experienced a temporary issue processing your question. Please try again.",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
       ]);

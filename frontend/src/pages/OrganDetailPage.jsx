@@ -395,10 +395,10 @@ export const OrganDetailPage = () => {
                 </Link>
 
                 <Link
-                  to={`/hospitals?specialty=${organ.recommendedSpecialist.specialtyKey}`}
+                  to={`/hospitals?organ=${organ.organId}&specialty=${organ.recommendedSpecialist.specialtyKey}`}
                   className="px-6 py-3 rounded-2xl bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-all"
                 >
-                  <Building2 className="w-4 h-4" />
+                  <Building2 className="w-4 h-4 text-teal-400" />
                   Find Nearby Hospitals
                 </Link>
               </div>

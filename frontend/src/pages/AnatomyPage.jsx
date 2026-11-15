@@ -20,6 +20,7 @@ export const AnatomyPage = () => {
   const [layers, setLayers] = useState({ 
     bodyShell: true, 
     skeletal: true, 
+    muscular: true,
     internalOrgans: true, 
     skinOpacity: 0.35 
   });

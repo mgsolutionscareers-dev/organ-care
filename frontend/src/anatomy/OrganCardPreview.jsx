@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles, Activity, ShieldCheck, Maximize2, X } from 'lucide-react';
+import { ArrowRight, Sparkles, Activity, ShieldCheck, Maximize2, X, Building2 } from 'lucide-react';
 
 // Organ-specific medical imagery & illustrations matching the design reference
 const ORGAN_IMAGES = {
@@ -23,6 +23,7 @@ export const OrganCardPreview = ({ organ, onClose, onIsolate, isIsolated }) => {
   if (!organ) return null;
 
   const organImg = ORGAN_IMAGES[organ.organId] || ORGAN_IMAGES.heart;
+  const specialtyKey = organ.recommendedSpecialist?.specialtyKey || 'all';
 
   return (
     <div className="w-72 sm:w-80 max-w-[320px] bg-navy-950/95 backdrop-blur-xl border border-teal-500/35 rounded-3xl p-5 text-white shadow-2xl transition-all duration-300 animate-in fade-in select-none">
@@ -87,6 +88,15 @@ export const OrganCardPreview = ({ organ, onClose, onIsolate, isIsolated }) => {
             {isIsolated ? 'Viewing Isolated 3D View' : 'Isolate 3D Organ (360°)'}
           </button>
         )}
+
+        {/* Direct Hospital Locator Link for this Organ */}
+        <button
+          onClick={() => navigate(`/hospitals?organ=${organ.organId}&specialty=${specialtyKey}`)}
+          className="w-full py-2.5 px-3 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 hover:text-white border border-teal-500/40 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+        >
+          <Building2 className="w-3.5 h-3.5 text-teal-400" />
+          Find Hospitals Near Me
+        </button>
 
         <button
           onClick={() => navigate(`/organ/${organ.organId}`)}

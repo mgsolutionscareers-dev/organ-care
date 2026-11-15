@@ -217,6 +217,16 @@ export const AnatomyControls = ({
               </label>
 
               <label className="flex items-center justify-between cursor-pointer py-1 text-slate-300 hover:text-white">
+                <span>Muscular System</span>
+                <input
+                  type="checkbox"
+                  checked={layers.muscular !== false}
+                  onChange={(e) => setLayers({ ...layers, muscular: e.target.checked })}
+                  className="rounded text-brand-500 focus:ring-brand-500 w-4 h-4 accent-teal-500"
+                />
+              </label>
+
+              <label className="flex items-center justify-between cursor-pointer py-1 text-slate-300 hover:text-white">
                 <span>Internal Organs</span>
                 <input
                   type="checkbox"

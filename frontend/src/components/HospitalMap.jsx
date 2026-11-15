@@ -88,10 +88,12 @@ export const HospitalMap = ({
     ? [hospitals[0].coordinates.lat, hospitals[0].coordinates.lng]
     : [40.758896, -73.985130];
 
-  // Compute bounds if multiple hospitals
-  const bounds = hospitals.length > 0 
-    ? hospitals.map(h => [h.coordinates.lat, h.coordinates.lng])
-    : null;
+  // Compute bounds if multiple hospitals and user location
+  const allPoints = [
+    ...(userLocation ? [[userLocation.lat, userLocation.lng]] : []),
+    ...hospitals.map(h => [h.coordinates.lat, h.coordinates.lng])
+  ];
+  const bounds = allPoints.length > 0 ? allPoints : null;
 
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-soft relative bg-slate-100" style={{ height, minHeight: '300px' }}>

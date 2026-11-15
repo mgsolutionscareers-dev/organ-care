@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useGLTF, Html, Center } from '@react-three/drei';
+import { useGLTF, Center } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Configure DRACO loader path
@@ -80,9 +80,11 @@ export const GLBOrganModel = ({
   showLandmarks = true,
   activeLandmark = null,
   onSelectLandmark,
+  onHoverLandmark,
   scaleMultiplier = 1
 }) => {
   const groupRef = useRef();
+  const [hoveredLandmark, setHoveredLandmark] = useState(null);
   const gltf = useGLTF(modelPath, '/draco/');
 
   const clonedScene = useMemo(() => {
@@ -134,56 +136,50 @@ export const GLBOrganModel = ({
         <primitive object={clonedScene} />
       </Center>
 
-      {/* 3D Anatomical Landmarks */}
+      {/* 3D Anatomical Landmarks - Sleek glowing 3D pins without disruptive DOM elements */}
       {showLandmarks && landmarks.map((lm) => {
         const isActive = activeLandmark === lm.id;
+        const isHoveredPin = hoveredLandmark === lm.id;
+
         return (
-          <group key={lm.id} position={lm.pos}>
-            {/* Glowing 3D Landmark Sphere */}
+          <group 
+            key={lm.id} 
+            position={lm.pos}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              setHoveredLandmark(lm.id);
+              if (onHoverLandmark) onHoverLandmark(lm);
+            }}
+            onPointerOut={(e) => {
+              e.stopPropagation();
+              setHoveredLandmark(null);
+              if (onHoverLandmark) onHoverLandmark(null);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onSelectLandmark) onSelectLandmark(lm);
+            }}
+          >
+            {/* 3D Landmark Pin Sphere */}
             <mesh>
-              <sphereGeometry args={[0.025, 16, 16]} />
+              <sphereGeometry args={[isActive || isHoveredPin ? 0.03 : 0.022, 16, 16]} />
               <meshStandardMaterial
-                color={isActive ? '#F59E0B' : '#14B8A6'}
-                emissive={isActive ? '#F59E0B' : '#0D9488'}
-                emissiveIntensity={0.8}
+                color={isActive ? '#F59E0B' : (isHoveredPin ? '#38BDF8' : '#14B8A6')}
+                emissive={isActive ? '#F59E0B' : (isHoveredPin ? '#38BDF8' : '#0D9488')}
+                emissiveIntensity={isActive ? 1.2 : 0.7}
               />
             </mesh>
 
-            {/* Clean, tightly bounded 2D HTML Label */}
-            <Html
-              position={[0, 0.04, 0]}
-              center
-              style={{
-                pointerEvents: 'auto',
-                userSelect: 'none',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onSelectLandmark) onSelectLandmark(lm);
-                }}
-                className={`cursor-pointer whitespace-nowrap transition-transform duration-200 ${
-                  isActive ? 'scale-110 z-50' : 'hover:scale-105 z-20'
-                }`}
-              >
-                <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold shadow-md border ${
-                  isActive
-                    ? 'bg-amber-400 text-navy-950 border-amber-300 ring-2 ring-amber-400/30'
-                    : 'bg-navy-950/85 backdrop-blur-md text-teal-300 border-teal-400/50 hover:bg-navy-900'
-                }`}>
-                  {lm.name}
-                </div>
-
-                {isActive && (
-                  <div className="mt-1 p-2 rounded-xl bg-navy-950/95 backdrop-blur-md border border-amber-400/40 shadow-2xl text-left w-44 animate-in fade-in">
-                    <div className="font-extrabold text-amber-300 text-[10px]">{lm.name}</div>
-                    <div className="text-[9px] text-slate-300 mt-0.5 leading-snug">{lm.desc}</div>
-                  </div>
-                )}
-              </div>
-            </Html>
+            {/* Pulsing ring indicator */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.028, 0.036, 24]} />
+              <meshBasicMaterial 
+                color={isActive ? '#FBBF24' : '#2DD4BF'} 
+                transparent 
+                opacity={isActive ? 0.9 : 0.6} 
+                side={THREE.DoubleSide} 
+              />
+            </mesh>
           </group>
         );
       })}
