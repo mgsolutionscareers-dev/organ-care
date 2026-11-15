@@ -5,6 +5,14 @@ import 'leaflet/dist/leaflet.css';
 import { Navigation, Phone, Star, Building2, MapPin, ExternalLink } from 'lucide-react';
 
 // Custom Medical Hospital Marker Icon
+const isValidLatLng = (pt) => 
+  Array.isArray(pt) && 
+  pt.length === 2 && 
+  typeof pt[0] === 'number' && 
+  typeof pt[1] === 'number' && 
+  !isNaN(pt[0]) && 
+  !isNaN(pt[1]);
+
 const createHospitalIcon = (isSelected, isEmergency) => {
   const bgColor = isSelected ? '#0D9488' : isEmergency ? '#EF4444' : '#14B8A6';
   const strokeColor = isSelected ? '#FFFFFF' : '#FFFFFF';
@@ -61,9 +69,17 @@ const MapController = ({ center, zoom, bounds }) => {
 
   useEffect(() => {
     if (bounds && bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [35, 35], maxZoom: 15 });
-    } else if (center) {
-      map.flyTo(center, zoom || 13, { duration: 1.0 });
+      try {
+        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 15 });
+      } catch (e) {
+        console.warn('Map fitBounds error:', e);
+      }
+    } else if (center && isValidLatLng(center)) {
+      try {
+        map.flyTo(center, zoom || 13, { duration: 1.0 });
+      } catch (e) {
+        console.warn('Map flyTo error:', e);
+      }
     }
   }, [center, zoom, bounds, map]);
 
@@ -79,19 +95,29 @@ export const HospitalMap = ({
 }) => {
   const [mapError, setMapError] = useState(false);
 
+  // Validate points
+  const validUserLocation = userLocation && isValidLatLng([Number(userLocation.lat), Number(userLocation.lng)])
+    ? [Number(userLocation.lat), Number(userLocation.lng)]
+    : null;
+
+  const validHospitals = hospitals.filter(
+    h => h && h.coordinates && isValidLatLng([Number(h.coordinates.lat), Number(h.coordinates.lng)])
+  );
+
+  const selectedPoint = selectedHospital && selectedHospital.coordinates && isValidLatLng([Number(selectedHospital.coordinates.lat), Number(selectedHospital.coordinates.lng)])
+    ? [Number(selectedHospital.coordinates.lat), Number(selectedHospital.coordinates.lng)]
+    : null;
+
   // Compute map center
-  const defaultCenter = selectedHospital 
-    ? [selectedHospital.coordinates.lat, selectedHospital.coordinates.lng]
-    : userLocation 
-    ? [userLocation.lat, userLocation.lng]
-    : hospitals.length > 0
-    ? [hospitals[0].coordinates.lat, hospitals[0].coordinates.lng]
-    : [40.758896, -73.985130];
+  const defaultCenter = selectedPoint 
+    || validUserLocation 
+    || (validHospitals.length > 0 ? [Number(validHospitals[0].coordinates.lat), Number(validHospitals[0].coordinates.lng)] : null)
+    || [40.758896, -73.985130];
 
   // Compute bounds if multiple hospitals and user location
   const allPoints = [
-    ...(userLocation ? [[userLocation.lat, userLocation.lng]] : []),
-    ...hospitals.map(h => [h.coordinates.lat, h.coordinates.lng])
+    ...(validUserLocation ? [validUserLocation] : []),
+    ...validHospitals.map(h => [Number(h.coordinates.lat), Number(h.coordinates.lng)])
   ];
   const bounds = allPoints.length > 0 ? allPoints : null;
 
@@ -105,7 +131,7 @@ export const HospitalMap = ({
           className="w-full h-full z-10"
         >
           <MapController 
-            center={selectedHospital ? [selectedHospital.coordinates.lat, selectedHospital.coordinates.lng] : defaultCenter} 
+            center={selectedPoint || defaultCenter} 
             zoom={selectedHospital ? 14 : 12}
             bounds={!selectedHospital && bounds ? bounds : null}
           />
@@ -117,8 +143,8 @@ export const HospitalMap = ({
           />
 
           {/* User Geolocation Pin */}
-          {userLocation && (
-            <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
+          {validUserLocation && (
+            <Marker position={validUserLocation} icon={userIcon}>
               <Popup>
                 <div className="text-xs font-bold text-navy-900">
                   📍 You are here
@@ -128,12 +154,12 @@ export const HospitalMap = ({
           )}
 
           {/* Hospital Markers */}
-          {hospitals.map((hosp) => {
+          {validHospitals.map((hosp) => {
             const isSelected = selectedHospital?.id === hosp.id;
             return (
               <Marker
                 key={hosp.id}
-                position={[hosp.coordinates.lat, hosp.coordinates.lng]}
+                position={[Number(hosp.coordinates.lat), Number(hosp.coordinates.lng)]}
                 icon={createHospitalIcon(isSelected, hosp.emergency24x7)}
                 eventHandlers={{
                   click: () => {

@@ -52,10 +52,10 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[580px]">
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-0 md:min-h-[580px]">
         
         {/* Left Column: Medical Stethoscope & Heart Graphic (Matches Reference Image) */}
-        <div className="md:col-span-5 relative bg-gradient-to-br from-navy-950 via-navy-900 to-[#0B2C33] p-8 text-white flex flex-col justify-between overflow-hidden">
+        <div className="md:col-span-5 relative bg-gradient-to-br from-navy-950 via-navy-900 to-[#0B2C33] p-6 sm:p-8 text-white flex flex-col justify-between overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10">
@@ -70,8 +70,8 @@ export const LoginPage = () => {
           </div>
 
           {/* Stethoscope illustration */}
-          <div className="relative z-10 my-8 flex justify-center">
-            <div className="w-48 h-48 rounded-3xl overflow-hidden border border-teal-500/30 shadow-2xl">
+          <div className="relative z-10 my-4 sm:my-8 flex justify-center">
+            <div className="w-24 h-24 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-2xl sm:rounded-3xl overflow-hidden border border-teal-500/30 shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=600&q=80"
                 alt="Medical stethoscope and heart"
@@ -81,7 +81,7 @@ export const LoginPage = () => {
           </div>
 
           <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold text-white">Welcome Back!</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white">Welcome Back!</h2>
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
               Continue your health journey and access your saved searches and organ favorites with OrganCare.
             </p>
@@ -89,7 +89,7 @@ export const LoginPage = () => {
         </div>
 
         {/* Right Column: Login Form */}
-        <div className="md:col-span-7 p-8 sm:p-12 flex flex-col justify-center">
+        <div className="md:col-span-7 p-6 sm:p-8 md:p-12 flex flex-col justify-center">
           <div className="max-w-md w-full mx-auto">
             
             <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-900">

@@ -53,9 +53,14 @@ export const HomePage = () => {
   useEffect(() => {
     // Fetch organs from backend API with fallback
     fetch('/api/organs')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+          throw new Error('Not JSON');
+        }
+        return res.json();
+      })
       .then(data => {
-        if (data.success) setOrgans(data.data);
+        if (data && data.success && Array.isArray(data.data)) setOrgans(data.data);
       })
       .catch(() => setOrgans(organsData));
   }, []);

@@ -34,6 +34,7 @@ export const DoctorsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDoctorModal, setSelectedDoctorModal] = useState(null);
   const [favoriteDoctorIds, setFavoriteDoctorIds] = useState([]);
+  const [mobileTab, setMobileTab] = useState('list'); // 'list' | 'map'
 
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -175,11 +176,37 @@ export const DoctorsPage = () => {
           </div>
         </div>
 
+        {/* Mobile View Switcher */}
+        <div className="lg:hidden flex items-center p-1 bg-slate-100 rounded-xl mb-6">
+          <button
+            onClick={() => setMobileTab('list')}
+            className={`flex-1 py-2 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              mobileTab === 'list' 
+                ? 'bg-white text-navy-900 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Stethoscope className="w-3.5 h-3.5 text-brand-600" />
+            <span>Specialists ({doctors.length})</span>
+          </button>
+          <button
+            onClick={() => setMobileTab('map')}
+            className={`flex-1 py-2 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              mobileTab === 'map' 
+                ? 'bg-white text-navy-900 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <MapPin className="w-3.5 h-3.5 text-brand-600" />
+            <span>Hospital Map</span>
+          </button>
+        </div>
+
         {/* ----------------- SPLIT LAYOUT: DOCTORS LIST & INTERACTIVE MAP PREVIEW ----------------- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Doctor Cards (Matches Reference Layout) */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className={`lg:col-span-7 space-y-4 ${mobileTab === 'list' ? 'block' : 'hidden lg:block'}`}>
             <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
               <span>{doctors.length} Specialist{doctors.length === 1 ? '' : 's'} Available</span>
               <span>Sorted by Medical Verification</span>
@@ -273,7 +300,7 @@ export const DoctorsPage = () => {
           </div>
 
           {/* Right Column: Live Interactive Map (Matches Screenshot Exactly!) */}
-          <div className="lg:col-span-5 space-y-5 sticky top-28">
+          <div className={`lg:col-span-5 space-y-5 lg:sticky lg:top-28 ${mobileTab === 'map' ? 'block' : 'hidden lg:block'}`}>
             <div className="bg-white rounded-3xl p-5 shadow-soft border border-slate-100">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
@@ -344,7 +371,7 @@ export const DoctorsPage = () => {
       {/* ----------------- DOCTOR PROFILE MODAL ----------------- */}
       {selectedDoctorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 relative">
+          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setSelectedDoctorModal(null)}
               className="absolute top-5 right-5 p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"

@@ -64,10 +64,10 @@ export const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[620px]">
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-0 md:min-h-[620px]">
         
         {/* Left Column: Healthcare Shield Illustration (Matches Reference Image) */}
-        <div className="md:col-span-5 relative bg-gradient-to-br from-navy-950 via-navy-900 to-[#0B2C33] p-8 text-white flex flex-col justify-between overflow-hidden">
+        <div className="md:col-span-5 relative bg-gradient-to-br from-navy-950 via-navy-900 to-[#0B2C33] p-6 sm:p-8 text-white flex flex-col justify-between overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10">
@@ -82,8 +82,8 @@ export const RegisterPage = () => {
           </div>
 
           {/* Healthcare shield graphic */}
-          <div className="relative z-10 my-8 flex justify-center">
-            <div className="w-48 h-48 rounded-3xl overflow-hidden border border-teal-500/30 shadow-2xl bg-navy-900/60 p-2 flex items-center justify-center">
+          <div className="relative z-10 my-4 sm:my-8 flex justify-center">
+            <div className="w-24 h-24 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-2xl sm:rounded-3xl overflow-hidden border border-teal-500/30 shadow-2xl bg-navy-900/60 p-2 flex items-center justify-center">
               <img
                 src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80"
                 alt="Healthcare protective shield hands"
@@ -93,7 +93,7 @@ export const RegisterPage = () => {
           </div>
 
           <div className="relative z-10">
-            <h2 className="text-2xl font-extrabold text-white">Create Your Account</h2>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-white">Create Your Account</h2>
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
               Join OrganCare to save your search history and organ favorites across all devices.
             </p>
@@ -101,7 +101,7 @@ export const RegisterPage = () => {
         </div>
 
         {/* Right Column: Register Form */}
-        <div className="md:col-span-7 p-8 sm:p-12 flex flex-col justify-center">
+        <div className="md:col-span-7 p-6 sm:p-8 md:p-12 flex flex-col justify-center">
           <div className="max-w-md w-full mx-auto">
             
             <h2 className="text-2xl sm:text-3xl font-extrabold text-navy-900">

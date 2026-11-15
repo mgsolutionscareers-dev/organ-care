@@ -149,17 +149,17 @@ export const OrganDetailPage = () => {
                   />
                 )}
 
-                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
+                <div className="absolute bottom-3 left-2 sm:left-3 right-2 sm:right-3 flex items-center justify-between gap-1.5 sm:gap-2 z-10">
                   <button
                     onClick={() => setViewMode(viewMode === '3d' ? 'illustration' : '3d')}
-                    className="py-1.5 px-3 rounded-xl bg-navy-900/90 hover:bg-navy-800 text-teal-300 text-[11px] font-bold backdrop-blur-md border border-teal-500/30"
+                    className="py-1.5 px-2.5 sm:px-3 rounded-xl bg-navy-900/90 hover:bg-navy-800 text-teal-300 text-[10px] sm:text-[11px] font-bold backdrop-blur-md border border-teal-500/30 cursor-pointer"
                   >
-                    {viewMode === '3d' ? 'Show Medical Illustration' : 'Show Interactive 3D Model'}
+                    {viewMode === '3d' ? '2D Photo' : 'Interactive 3D'}
                   </button>
 
                   <Link
                     to={`/anatomy?organ=${organ.organId}`}
-                    className="py-1.5 px-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-navy-950 text-[11px] font-extrabold flex items-center gap-1 shadow-md"
+                    className="py-1.5 px-2.5 sm:px-3 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-navy-950 text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1 shadow-md cursor-pointer whitespace-nowrap"
                   >
                     <Activity className="w-3.5 h-3.5" />
                     Full Body View
@@ -194,13 +194,13 @@ export const OrganDetailPage = () => {
                 </p>
               </div>
 
-              {/* Navigation Tabs */}
-              <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+              {/* Navigation Tabs (Smooth horizontal touch scroll on mobile) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                    className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                       activeTab === tab.key
                         ? 'bg-white text-navy-900 shadow-sm border border-slate-200/60'
                         : 'text-slate-500 hover:text-navy-900'

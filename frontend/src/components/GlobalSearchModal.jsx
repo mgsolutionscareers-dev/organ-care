@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, Activity, Apple, Stethoscope, Building2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { recordHistoryEvent } from '../services/historyService';
+import { organsData } from '../data/organsData';
+import { doctorsData } from '../data/doctorsData';
+import { hospitalsData } from '../data/hospitalsData';
 
 export const GlobalSearchModal = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
@@ -21,27 +24,101 @@ export const GlobalSearchModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Debounced search query
+  // Client-side instant unified search across organs, nutrition, doctors, and hospitals
   useEffect(() => {
-    if (!query.trim()) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
       setResults([]);
       return;
     }
 
-    const timer = setTimeout(async () => {
-      setLoading(true);
+    setLoading(true);
+    const timer = setTimeout(() => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
-        const data = await res.json();
-        if (data.success) {
-          setResults(data.results || []);
-        }
+        const matches = [];
+
+        // 1. Match Organs
+        organsData.forEach(organ => {
+          const matchName = organ.name.toLowerCase().includes(q);
+          const matchSystem = organ.system?.toLowerCase().includes(q);
+          const matchFunc = organ.description?.toLowerCase().includes(q) || organ.functions?.some(f => f.toLowerCase().includes(q));
+          const matchDiseases = organ.commonDiseases?.some(d => d.toLowerCase().includes(q));
+          
+          if (matchName || matchSystem || matchFunc || matchDiseases) {
+            matches.push({
+              id: organ.organId,
+              type: 'organ',
+              title: organ.name,
+              badge: organ.system,
+              subtitle: organ.overview?.tagline || organ.description || 'Vital Human Organ',
+              link: `/anatomy?organ=${organ.organId}`
+            });
+          }
+        });
+
+        // 2. Match Nutrition
+        organsData.forEach(organ => {
+          const nutFoods = organ.nutrition?.recommendedFoods || [];
+          const matchFoods = nutFoods.some(food => 
+            (typeof food === 'string' && food.toLowerCase().includes(q)) || 
+            (food.name && food.name.toLowerCase().includes(q))
+          );
+          if (matchFoods || (q.includes('nutri') && organ.name.toLowerCase().includes(q))) {
+            matches.push({
+              id: `nut-${organ.organId}`,
+              type: 'nutrition',
+              title: `${organ.name} Nutrition Guide`,
+              badge: 'Nutrition',
+              subtitle: `Dietary recommendations & protective foods for ${organ.name}`,
+              link: `/nutrition?organ=${organ.organId}`
+            });
+          }
+        });
+
+        // 3. Match Doctors
+        doctorsData.forEach(doc => {
+          if (
+            doc.name.toLowerCase().includes(q) ||
+            doc.specialty.toLowerCase().includes(q) ||
+            doc.hospitalAffiliation.toLowerCase().includes(q)
+          ) {
+            matches.push({
+              id: doc.id,
+              type: 'doctor',
+              title: doc.name,
+              badge: doc.specialty,
+              subtitle: `${doc.qualifications} • ${doc.hospitalAffiliation}`,
+              link: `/doctors?specialty=${doc.specialtyKey || 'all'}`
+            });
+          }
+        });
+
+        // 4. Match Hospitals
+        hospitalsData.forEach(hosp => {
+          if (
+            hosp.name.toLowerCase().includes(q) ||
+            hosp.address.toLowerCase().includes(q) ||
+            hosp.city?.toLowerCase().includes(q) ||
+            hosp.specialties?.some(s => s.toLowerCase().includes(q))
+          ) {
+            matches.push({
+              id: hosp.id,
+              type: 'hospital',
+              title: hosp.name,
+              badge: hosp.emergency24x7 ? '24/7 ER' : 'Hospital',
+              subtitle: hosp.address,
+              link: `/hospitals/${hosp.id}`
+            });
+          }
+        });
+
+        setResults(matches.slice(0, 10));
       } catch (err) {
-        console.error('Search error:', err);
+        console.warn('Search filtering error:', err);
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [query]);

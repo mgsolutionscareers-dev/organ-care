@@ -3,18 +3,14 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Building2, 
   MapPin, 
-  Phone, 
   Star, 
   Search, 
   Navigation, 
-  Clock, 
   ArrowRight,
   Crosshair,
   Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  CheckCircle2,
-  Filter
+  Map as MapIcon,
+  ListFilter
 } from 'lucide-react';
 import { organsData } from '../data/organsData';
 import { HospitalMap } from '../components/HospitalMap';
@@ -41,6 +37,7 @@ export const HospitalsPage = () => {
   const [locationCity, setLocationCity] = useState('');
   const [locating, setLocating] = useState(false);
   const [locationNotice, setLocationNotice] = useState('Detecting your local area...');
+  const [mobileTab, setMobileTab] = useState('list'); // 'list' | 'map'
 
   const specialties = [
     { key: 'all', label: 'All Departments' },
@@ -174,8 +171,8 @@ export const HospitalsPage = () => {
   // Filter hospitals based on search & specialty
   useEffect(() => {
     let filtered = rawHospitals.map(h => {
-      let dist = h.distanceKm;
-      if (userLocation) {
+      let dist = h.distanceKm || 5.0;
+      if (userLocation && h.coordinates && h.coordinates.lat != null && h.coordinates.lng != null) {
         dist = calculateHaversineDistance(userLocation.lat, userLocation.lng, h.coordinates.lat, h.coordinates.lng);
       }
       return { 
@@ -262,14 +259,14 @@ export const HospitalsPage = () => {
     <div className="min-h-screen bg-[#F8FAFC]">
       
       {/* ----------------- TOP HERO & SEARCH HEADER ----------------- */}
-      <div className="bg-white border-b border-slate-200/80 pt-8 pb-6 px-4 sm:px-6 lg:px-8 shadow-sm">
-        <div className="max-w-7xl mx-auto space-y-5">
+      <div className="bg-white border-b border-slate-200/80 pt-6 sm:pt-8 pb-5 sm:pb-6 px-4 sm:px-6 lg:px-8 shadow-sm">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-5">
           
           {/* Header Title + Location Action Button */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-teal-600 uppercase tracking-wider mb-1">
-                <Building2 className="w-4 h-4 text-teal-500" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-teal-600 uppercase tracking-wider mb-1">
+                <Building2 className="w-3.5 h-3.5 text-teal-500" />
                 Hospital & Doctor Discovery
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#123E48] tracking-tight">
@@ -284,7 +281,7 @@ export const HospitalsPage = () => {
             <button
               onClick={requestUserGPS}
               disabled={locating}
-              className="self-start md:self-auto px-4 py-2.5 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-teal-500/25 transition-all cursor-pointer disabled:opacity-60"
+              className="self-stretch sm:self-auto px-4 py-2.5 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-teal-500/25 transition-all cursor-pointer disabled:opacity-60"
             >
               <Crosshair className={`w-4 h-4 ${locating ? 'animate-spin' : ''}`} />
               {locating ? 'Detecting Location...' : 'Use My Live GPS'}
@@ -293,8 +290,8 @@ export const HospitalsPage = () => {
 
           {/* Organ Referral Banner (If coming from 3D Anatomy) */}
           {selectedOrganData && (
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#123E48] to-[#0D9488] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
-              <div className="flex items-center gap-3">
+            <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-[#123E48] to-[#0D9488] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
+              <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-teal-300 animate-ping shrink-0"></span>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-teal-200 tracking-wider block">
@@ -317,9 +314,9 @@ export const HospitalsPage = () => {
           )}
 
           {/* Live Location Pill Banner */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-slate-600">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-teal-600 shrink-0" />
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <MapPin className="w-3.5 h-3.5 text-teal-600 shrink-0" />
               <span className="font-medium text-slate-700">{locationNotice}</span>
               {locationCity && (
                 <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200/80 font-bold text-[11px]">
@@ -329,7 +326,7 @@ export const HospitalsPage = () => {
             </div>
 
             <div className="text-slate-500 text-xs">
-              <span className="font-bold text-slate-800">{hospitals.length}</span> facilities found within range
+              <span className="font-bold text-slate-800">{hospitals.length}</span> facilities found
             </div>
           </div>
 
@@ -339,13 +336,13 @@ export const HospitalsPage = () => {
             {/* Search Input */}
             <form onSubmit={handleSearchSubmit} className="relative flex-1 flex gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search hospital name, city, or area (e.g. Dharmavaram, Mumbai, New York)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium text-slate-900"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium text-slate-900"
                 />
               </div>
               <button
@@ -357,12 +354,12 @@ export const HospitalsPage = () => {
             </form>
 
             {/* Department Filter Pills (Scrollable) */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
               {specialties.map(spec => (
                 <button
                   key={spec.key}
                   onClick={() => setSelectedSpecialty(spec.key)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 cursor-pointer ${
                     selectedSpecialty === spec.key
                       ? 'bg-[#14B8A6] text-white shadow-sm shadow-teal-500/20'
                       : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
@@ -375,22 +372,48 @@ export const HospitalsPage = () => {
 
           </div>
 
+          {/* Mobile View Toggle Switch: List View vs Map View (lg:hidden) */}
+          <div className="lg:hidden flex items-center p-1 bg-slate-100 rounded-xl">
+            <button
+              onClick={() => setMobileTab('list')}
+              className={`flex-1 py-2 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mobileTab === 'list' 
+                  ? 'bg-white text-[#123E48] shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <ListFilter className="w-3.5 h-3.5 text-teal-600" />
+              <span>List View ({hospitals.length})</span>
+            </button>
+            <button
+              onClick={() => setMobileTab('map')}
+              className={`flex-1 py-2 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mobileTab === 'map' 
+                  ? 'bg-white text-[#123E48] shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <MapIcon className="w-3.5 h-3.5 text-teal-600" />
+              <span>Interactive Map</span>
+            </button>
+          </div>
+
         </div>
       </div>
 
       {/* ----------------- MAIN TWO-COLUMN SPLIT LAYOUT ----------------- */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* LEFT COLUMN: Hospital Cards Directory (58% width on desktop) */}
-          <div className="lg:col-span-7 space-y-4">
+          {/* LEFT COLUMN: Hospital Cards Directory (58% width on desktop; visible on mobile when mobileTab === 'list') */}
+          <div className={`lg:col-span-7 space-y-3 sm:space-y-4 ${mobileTab === 'list' ? 'block' : 'hidden lg:block'}`}>
             
             <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
-              <span>Showing healthcare facilities sorted by proximity</span>
+              <span>Sorted by nearest distance to you</span>
               {userLocation && (
                 <span className="text-teal-700 font-bold flex items-center gap-1">
                   <Navigation className="w-3.5 h-3.5" />
-                  Live GPS Proximity
+                  Live GPS
                 </span>
               )}
             </div>
@@ -412,7 +435,9 @@ export const HospitalsPage = () => {
             ) : (
               hospitals.map((hosp) => {
                 const isSelected = selectedHospital?.id === hosp.id;
-                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${hosp.coordinates.lat},${hosp.coordinates.lng}`;
+                const googleMapsUrl = (hosp.coordinates?.lat != null && hosp.coordinates?.lng != null)
+                  ? `https://www.google.com/maps/dir/?api=1&destination=${hosp.coordinates.lat},${hosp.coordinates.lng}`
+                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hosp.name + ' ' + hosp.address)}`;
 
                 return (
                   <div
@@ -424,24 +449,24 @@ export const HospitalsPage = () => {
                         : 'border-slate-200/90 hover:border-teal-300'
                     }`}
                   >
-                    <div className="flex flex-col sm:flex-row gap-4 items-start justify-between">
+                    <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-start justify-between">
                       
                       {/* Left: Hospital Thumbnail Image */}
-                      <div className="w-full sm:w-36 h-28 sm:h-28 rounded-xl overflow-hidden shrink-0 relative bg-slate-100">
+                      <div className="w-full sm:w-36 h-36 sm:h-28 rounded-xl overflow-hidden shrink-0 relative bg-slate-100">
                         <img
                           src={hosp.image}
                           alt={hosp.name}
                           className="w-full h-full object-cover"
                         />
                         {hosp.emergency24x7 && (
-                          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[9px] uppercase shadow">
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[9px] uppercase shadow">
                             24/7 ER
                           </div>
                         )}
                       </div>
 
                       {/* Middle: Details */}
-                      <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="flex-1 min-w-0 space-y-1.5 w-full">
                         
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="text-base font-extrabold text-[#123E48] leading-snug hover:text-teal-600 transition-colors">
@@ -493,7 +518,7 @@ export const HospitalsPage = () => {
                           className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all"
                         >
                           <Navigation className="w-3 h-3" />
-                          Get Directions
+                          Directions
                         </a>
 
                         <Link
@@ -514,8 +539,8 @@ export const HospitalsPage = () => {
 
           </div>
 
-          {/* RIGHT COLUMN: Sticky Interactive Map (42% width on desktop) */}
-          <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
+          {/* RIGHT COLUMN: Interactive Map (42% width on desktop; visible on mobile when mobileTab === 'map') */}
+          <div className={`lg:col-span-5 lg:sticky lg:top-24 space-y-4 ${mobileTab === 'map' ? 'block' : 'hidden lg:block'}`}>
             
             <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/90 relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 px-1">
@@ -529,7 +554,7 @@ export const HospitalsPage = () => {
               </div>
 
               {/* Map Canvas */}
-              <div className="w-full h-[400px] lg:h-[480px] rounded-2xl overflow-hidden border border-slate-200 relative">
+              <div className="w-full h-[360px] sm:h-[400px] lg:h-[480px] rounded-2xl overflow-hidden border border-slate-200 relative">
                 <HospitalMap
                   hospitals={hospitals}
                   selectedHospital={selectedHospital}
@@ -538,7 +563,7 @@ export const HospitalsPage = () => {
                 />
               </div>
 
-              {/* Floating Selected Hospital Info Box below the map */}
+              {/* Selected Hospital Info Box below the map */}
               {selectedHospital && (
                 <div className="mt-3.5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 animate-in fade-in">
                   <div className="min-w-0">
@@ -552,7 +577,9 @@ export const HospitalsPage = () => {
                   </div>
 
                   <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedHospital.coordinates.lat},${selectedHospital.coordinates.lng}`}
+                    href={(selectedHospital.coordinates?.lat != null && selectedHospital.coordinates?.lng != null)
+                      ? `https://www.google.com/maps/dir/?api=1&destination=${selectedHospital.coordinates.lat},${selectedHospital.coordinates.lng}`
+                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedHospital.name + ' ' + selectedHospital.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-3.5 py-2 rounded-xl bg-[#14B8A6] hover:bg-[#0D9488] text-white font-extrabold text-xs flex items-center gap-1.5 shrink-0 shadow-sm"

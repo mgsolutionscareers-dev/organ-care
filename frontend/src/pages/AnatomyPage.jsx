@@ -6,7 +6,7 @@ import { OrganCardPreview } from '../anatomy/OrganCardPreview';
 import { organsData } from '../data/organsData.js';
 import { useAuth } from '../context/AuthContext';
 import { recordHistoryEvent } from '../services/historyService';
-import { RotateCcw, Sparkles, AlertCircle, ZoomIn, ZoomOut } from 'lucide-react';
+import { RotateCcw, Sparkles, AlertCircle, Sliders, X, Layers, Compass } from 'lucide-react';
 
 export const AnatomyPage = () => {
   const [searchParams] = useSearchParams();
@@ -27,6 +27,7 @@ export const AnatomyPage = () => {
   const [isIsolated, setIsIsolated] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [webGlAvailable, setWebGlAvailable] = useState(true);
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
 
   const { currentUser } = useAuth();
 
@@ -80,11 +81,33 @@ export const AnatomyPage = () => {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-5rem)] bg-gradient-to-b from-navy-950 via-[#07242C] to-navy-950 overflow-hidden flex flex-col select-none">
+    <div className="relative w-full h-[calc(100dvh-4rem)] sm:h-[calc(100vh-5rem)] bg-gradient-to-b from-navy-950 via-[#07242C] to-navy-950 overflow-hidden flex flex-col select-none">
       
-      {/* Top Floating Helper Banner (Only when not in isolated mode) */}
+      {/* ----------------- MOBILE QUICK ORGAN SELECTOR BAR (lg:hidden) ----------------- */}
       {!isIsolated && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden sm:block">
+        <div className="lg:hidden absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none touch-pan-x">
+          {organs.map((org) => {
+            const isSelected = selectedOrgan?.organId === org.organId;
+            return (
+              <button
+                key={org.organId}
+                onClick={() => handleSelectOrgan(org)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-md shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#14B8A6] text-navy-950 shadow-teal-500/25 scale-105'
+                    : 'bg-navy-900/90 backdrop-blur-md text-slate-300 border border-teal-500/20 hover:text-white'
+                }`}
+              >
+                {org.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Top Floating Helper Banner (Only on desktop when not in isolated mode) */}
+      {!isIsolated && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none hidden lg:block">
           <div className="px-4 py-1.5 rounded-full bg-navy-900/80 backdrop-blur-md border border-teal-500/30 text-teal-300 text-xs font-semibold shadow-lg flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-teal-400" />
             Click any organ mesh to focus, or select 'Isolate Organ' for 360° medical inspection
@@ -122,7 +145,7 @@ export const AnatomyPage = () => {
                 <button
                   key={o.organId}
                   onClick={() => setSelectedOrgan(o)}
-                  className="px-4 py-2 rounded-xl bg-navy-800 border border-teal-500/20 text-xs font-bold text-teal-300 hover:bg-teal-500 hover:text-navy-950 transition-all"
+                  className="px-4 py-2 rounded-xl bg-navy-800 border border-teal-500/20 text-xs font-bold text-teal-300 hover:bg-teal-500 hover:text-navy-950 transition-all cursor-pointer"
                 >
                   {o.name}
                 </button>
@@ -131,7 +154,7 @@ export const AnatomyPage = () => {
           </div>
         )}
 
-        {/* Left Overlay: Anatomy Controls Panel */}
+        {/* Desktop Left Overlay: Anatomy Controls Panel */}
         <div className="absolute top-6 left-6 z-20 hidden lg:block">
           <AnatomyControls
             organs={organs}
@@ -149,20 +172,82 @@ export const AnatomyPage = () => {
           />
         </div>
 
-        {/* Right Overlay: Selected Organ Preview Card (Fixed Width, matches design reference) */}
-        {selectedOrgan && !isIsolated && (
-          <div className="absolute top-6 right-6 z-20">
-            <OrganCardPreview
-              organ={selectedOrgan}
-              onClose={() => setSelectedOrgan(null)}
-              onIsolate={handleIsolateOrgan}
-              isIsolated={isIsolated}
+        {/* Mobile Trigger Button for Anatomy Controls (lg:hidden) */}
+        {!isIsolated && (
+          <button
+            onClick={() => setMobileControlsOpen(true)}
+            className="lg:hidden absolute bottom-16 sm:bottom-6 left-4 z-20 px-3.5 py-2.5 rounded-2xl bg-navy-950/90 text-teal-300 border border-teal-500/40 shadow-xl backdrop-blur-md flex items-center gap-2 text-xs font-bold transition-all cursor-pointer active:scale-95"
+            title="Anatomy Layers & Views"
+          >
+            <Layers className="w-4 h-4 text-teal-400" />
+            <span>Layers & Views</span>
+          </button>
+        )}
+
+        {/* Mobile Anatomy Controls Slide-Up Bottom Sheet */}
+        {mobileControlsOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-navy-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+            <div 
+              className="absolute inset-0" 
+              onClick={() => setMobileControlsOpen(false)}
             />
+            <div className="relative max-h-[85vh] overflow-y-auto bg-navy-950 border-t border-teal-500/40 rounded-t-3xl p-5 text-white shadow-2xl z-10 space-y-4 animate-in slide-in-from-bottom duration-200">
+              
+              {/* Sheet Header */}
+              <div className="flex items-center justify-between pb-2 border-b border-teal-500/20">
+                <div className="flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-teal-400" />
+                  <h3 className="text-sm font-extrabold text-white">Anatomy Controls & Layers</h3>
+                </div>
+                <button
+                  onClick={() => setMobileControlsOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Anatomy Controls Component inside Sheet */}
+              <AnatomyControls
+                organs={organs}
+                selectedOrgan={selectedOrgan}
+                onSelectOrgan={(org) => {
+                  handleSelectOrgan(org);
+                  setMobileControlsOpen(false);
+                }}
+                gender={gender}
+                setGender={setGender}
+                activeSystem={activeSystem}
+                setActiveSystem={setActiveSystem}
+                layers={layers}
+                setLayers={setLayers}
+                isIsolated={isIsolated}
+                setIsIsolated={setIsIsolated}
+                onResetCamera={() => {
+                  handleResetCamera();
+                  setMobileControlsOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Right Overlay: Selected Organ Preview Card (Mobile bottom docked or desktop floating) */}
+        {selectedOrgan && !isIsolated && (
+          <div className="absolute top-6 right-6 z-20 pointer-events-none">
+            <div className="pointer-events-auto">
+              <OrganCardPreview
+                organ={selectedOrgan}
+                onClose={() => setSelectedOrgan(null)}
+                onIsolate={handleIsolateOrgan}
+                isIsolated={isIsolated}
+              />
+            </div>
           </div>
         )}
 
         {/* Floating Quick Camera Controls (Bottom Right) */}
-        <div className="absolute bottom-6 right-6 z-20 flex flex-col gap-2 bg-navy-900/85 backdrop-blur-md p-1.5 rounded-2xl border border-teal-500/30 text-white shadow-xl">
+        <div className="absolute bottom-16 sm:bottom-6 right-4 sm:right-6 z-20 flex flex-col gap-2 bg-navy-900/85 backdrop-blur-md p-1.5 rounded-2xl border border-teal-500/30 text-white shadow-xl">
           <button
             onClick={handleResetCamera}
             title="Reset Camera View"

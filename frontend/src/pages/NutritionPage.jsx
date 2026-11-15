@@ -93,7 +93,7 @@ export const NutritionPage = () => {
           <h2 className="text-xs uppercase font-extrabold tracking-wider text-slate-400 mb-3">
             Recommended for Your Organs
           </h2>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none touch-pan-x">
             {organPills.map((pill) => {
               const Icon = pill.icon;
               const isSelected = selectedNutrition.organId === pill.id;
